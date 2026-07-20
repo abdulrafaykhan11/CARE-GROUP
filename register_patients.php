@@ -1,5 +1,9 @@
 <?php
 include 'config/db.php';
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    header("Location: login.php?error=please_login");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,6 +84,7 @@ if (isset($_POST['register_patient'])) {
             $query = "INSERT INTO patients (user_id,full_address,gender,city_id,date_of_birth,blood_group,emergency_contact_name,emergency_contact_phone,profile_image) VALUES ('$userid','$full_address','$gender','$city_id','$dob','$blood_group','$emergency_contact_name','$emergency_contact_number','$targetpath')";
             $result = mysqli_query($conn,$query);
             if($result){
+                $_SESSION['patient_id'] = mysqli_insert_id($conn);
                 echo "Profile created successfull";
                 echo "<script>window.location.href = 'login.php'</script>";
                 exit();

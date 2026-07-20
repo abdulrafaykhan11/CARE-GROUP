@@ -39,7 +39,7 @@ if (isset($_POST["submit"])) {
                     echo "<script>window.location.href = 'index.php'</script>";
                 }
                 if ($_SESSION['role'] === "Doctor") {
-                    echo "<script>window.location.href = 'index.php'</script>";
+                    echo "<script>window.location.href = 'doctor/profile.php'</script>";
                 }
                 if ($_SESSION['role'] === "Patient") {
                     echo "<script>window.location.href = 'index.php'</script>";

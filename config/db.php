@@ -1,7 +1,8 @@
 <?php
-$conn = mysqli_connect("localhost","root","","care");
-if(mysqli_connect_errno()){
-    echo "Error in database". mysqli_connect_error();
+// Session warning fix
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-session_start();
-?>
+
+$conn = mysqli_connect("localhost", "root", "", "care");
+// ... baki db connection code

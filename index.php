@@ -1,5 +1,9 @@
 <?php
 include "config/db.php";
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    header("Location: login.php?error=please_login");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +18,7 @@ include "config/db.php";
     <a href="logout.php">Logout</a>
     <form action="" method="post">
         <!-- Text box search input pattern -->
-        Search : <input type="search" name="search" value="<?php echo isset($_POST['search']) ? htmlspecialchars($_POST['search']) : ''; ?>" placeholder="Name, Specialization, City"><br><br>
+        Search : <input type="search" name="search" value="<?php echo isset($_POST['search']) ? htmlspecialchars($_POST['search']) : ''; ?>" placeholder="Enter Name"><br><br>
 
         <!-- City Dropdown Structure -->
         City : <select name="city_name">
@@ -62,7 +66,7 @@ include "config/db.php";
 
 <?php
 // Base Query Structure setup layout
-$query = "SELECT u.full_name, d.bio, s.specialization_name, c.city_name, d.experience_years, d.gender, d.qualification, d.profile_image, d.full_address 
+$query = "SELECT d.doctor_id, u.full_name, d.bio, s.specialization_name, c.city_name, d.experience_years, d.gender, d.qualification, d.profile_image, d.full_address 
           FROM doctors d 
           JOIN users u ON d.user_id = u.user_id 
           JOIN cities c ON d.city_id = c.city_id 
@@ -111,6 +115,7 @@ if (mysqli_num_rows($result) > 0) {
         <td>DOCTOR QUALIFICATION</td>
         <td>PROFILE IMAGE</td>
         <td>CLINIC ADDRESS</td>
+        <td>VIEW DETAILS</td>
         </tr>";
         
     while ($row = mysqli_fetch_assoc($result)) {
@@ -124,6 +129,7 @@ if (mysqli_num_rows($result) > 0) {
         echo "<td>" . htmlspecialchars($row['qualification']) . "</td>";
         echo "<td><img src='assets/uploads/doctor/profile/" . htmlspecialchars($row['profile_image']) . "' height='100' width='100' style='object-fit: contain;'></td>";
         echo "<td>" . htmlspecialchars($row['full_address']) . "</td>";
+        echo "<td><a href='doctor_details.php?doctor_id=" . $row['doctor_id'] . "'>View Details</a></td>";
         echo "</tr>";
     }
     echo "</table>";

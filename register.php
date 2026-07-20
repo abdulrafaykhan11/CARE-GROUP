@@ -52,15 +52,15 @@ if (isset($_POST["register"])) {
             $_SESSION["user_id"] = mysqli_insert_id($conn);
 
             if ($_SESSION["role"] === "Doctor") {
-                header("Location: register_doctor.php");
+                echo "<script>window.location.href = 'register_docotr.php'</script>";
                 exit();
             }
             if ($_SESSION["role"] === "Patient") {
-                header("Location: register_patients.php");
+                $_SESSION['full_name'] = $patient_name;
+                echo "<script>window.location.href = 'register_patients.php'</script>";
                 exit();
             }
-        }
-        else{
+        } else {
             echo "error username alredy exist or phone number alredy exist";
         }
     }

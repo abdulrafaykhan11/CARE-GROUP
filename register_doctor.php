@@ -1,5 +1,9 @@
 <?php
 include "config/db.php"; 
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+    header("Location: login.php?error=please_login");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
