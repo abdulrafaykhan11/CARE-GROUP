@@ -1,32 +1,6 @@
 <?php
 include "config/db.php";
-?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <form action="" method="post">
-        FULLNAME : <input type="text" name="full_name"><br>
-        EMAIL : <input type="email" name="email"><br>
-        PHONE : <input type="phone" name="phone"><br>
-        PASSWORD : <input type="password" name="password"><br>
-        ROLE :
-        <select name="role" required>
-            <option value="Patient">Patient</option>
-            <option value="Doctor">Doctor</option>
-        </select><br><br>
-        <input type="submit" name="register" value="Register">
-    </form>
-</body>
-
-</html>
-<?php
+$error = '';
 if (isset($_POST["register"])) {
     $emailPattern = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/";
     $phonePattern = "/^((\+92)|(0092)|(0))?3[0-9]{2}[-?\s]?[0-9]{7}$/";
@@ -52,17 +26,62 @@ if (isset($_POST["register"])) {
             $_SESSION["user_id"] = mysqli_insert_id($conn);
 
             if ($_SESSION["role"] === "Doctor") {
-                echo "<script>window.location.href = 'register_docotr.php'</script>";
+                header("Location: register_doctor.php");
                 exit();
             }
             if ($_SESSION["role"] === "Patient") {
-                $_SESSION['full_name'] = $patient_name;
-                echo "<script>window.location.href = 'register_patients.php'</script>";
+                $_SESSION['full_name'] = $name;
+                header("Location: register_patients.php");
                 exit();
             }
         } else {
-            echo "error username alredy exist or phone number alredy exist";
+            $error = "Error: username already exists or phone number already exists";
         }
+    } else {
+        $error = "Please fill all fields correctly.";
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Care Connect</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="auth-page">
+    <main class="auth-card">
+        <a class="brand" href="index.php">care<span>connect</span></a>
+        <h1>Create Account</h1>
+        <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
+        <form action="" method="post">
+            <div class="field">
+                <label>FULLNAME</label>
+                <input type="text" name="full_name" required>
+            </div>
+            <div class="field">
+                <label>EMAIL</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="field">
+                <label>PHONE</label>
+                <input type="tel" name="phone" required placeholder="e.g. 0300-1234567">
+            </div>
+            <div class="field">
+                <label>PASSWORD</label>
+                <input type="password" name="password" minlength="8" required>
+            </div>
+            <div class="field">
+                <label>ROLE</label>
+                <select name="role" required>
+                    <option value="Patient">Patient</option>
+                    <option value="Doctor">Doctor</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" type="submit" name="register">Register Now</button>
+        </form>
+        <p class="note">Already have an account? <a href="login.php" style="color:var(--teal);font-weight:700">Sign in</a></p>
+    </main>
+</body>
+</html>

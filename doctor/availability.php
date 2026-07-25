@@ -1,97 +1,12 @@
 <?php
-include "../config/db.php";
-
-// Testing ke liye doctor ID URL se uthao (?doc=5), agar nahi hai to default 5
-$doctor_id = isset($_GET['doc']) ? intval($_GET['doc']) : 5;
-
-$msg = ""; // Message store karne ke liye variable
-
-if (isset($_POST['add_schedule_btn'])) {
-    $day = mysqli_real_escape_string($conn, $_POST['available_day']);
-    $start_time = mysqli_real_escape_string($conn, $_POST['start_time']);
-    $end_time = mysqli_real_escape_string($conn, $_POST['end_time']);
-    $slot_duration = intval($_POST['slot_duration']);
-
-    $min_allowed = strtotime("09:00");
-    $max_allowed = strtotime("23:00");
-
-    $user_start = strtotime($start_time);
-    $user_end = strtotime($end_time);
-
-    // --- VALIDATION CHECKS ---
-    if (($user_end - $user_start) < 3600) {
-        $msg = "<p style='color:red;'>Minimum duration must be 1 hour!</p>";
-    } 
-    // Yahan saaf less than (<) aur greater than (>) laga diya taake dot 9 baje aur 11 baje block na ho
-    elseif ($user_start < $min_allowed || $user_start > $max_allowed) {
-        $msg = "<p style='color:red;'>Wrong Start Time! Clinic starts at 09:00 AM and ends at 11:00 PM (23:00).</p>";
-    } 
-    elseif ($user_end < $min_allowed || $user_end > $max_allowed) {
-        $msg = "<p style='color:red;'>Wrong End Time! Clinic starts at 09:00 AM and ends at 11:00 PM (23:00).</p>";
-    } 
-    elseif ($user_start >= $user_end) {
-        $msg = "<p style='color:red;'>Logic Error: Start time must be before End time!</p>";
-    } 
-    else {
-        // SQL query tumhare table structure ke mutabik (doctor_availability)
-        $query = "INSERT INTO doctor_availability (day, start_time, end_time, slot_duration, doctor_id) 
-                  VALUES ('$day', '$start_time', '$end_time', '$slot_duration', '$doctor_id')";
-                  
-        $result = mysqli_query($conn, $query);
-        if ($result) {
-            $msg = "<p style='color:green;'>Time slot added successfully for Doctor ID: $doctor_id</p>";
-        } else {
-            $msg = "<p style='color:red;'>Error adding time slot: " . mysqli_error($conn) . "</p>";
-        }
-    }
-}
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Availability</title>
-</head>
-<body>
-
-    <!-- Yahan error ya success message show hoga -->
-    <?php echo $msg; ?>
-
-    <fieldset>
-        <legend>Add New Time Slot (Doctor ID: <?php echo $doctor_id; ?>)</legend>
-        <!-- Action ko khaali chora taake isi dynamic URL par post ho -->
-        <form action="" method="POST">
-            <label>Select Day:</label>
-            <select name="available_day" required>
-                <option value="">-- Select Day --</option>
-                <option value="Monday">Monday</option>
-                <option value="Tuesday">Tuesday</option>
-                <option value="Wednesday">Wednesday</option>
-                <option value="Thursday">Thursday</option>
-                <option value="Friday">Friday</option>
-                <option value="Saturday">Saturday</option>
-                <option value="Sunday">Sunday</option>
-            </select>
-
-            <label>Start Time:</label>
-            <input type="time" name="start_time" min="09:00" max="23:00" required>
-
-            <label>End Time:</label>
-            <input type="time" name="end_time" min="09:00" max="23:00" required>
-
-            <label>Slot Duration:</label>
-            <select name="slot_duration" required>
-                <option value="">Select Duration</option>
-                <option value="15">15 Minutes</option>
-                <option value="20">20 Minutes</option>
-                <option value="30">30 Minutes</option>
-            </select>
-
-            <button type="submit" name="add_schedule_btn">Add Slot</button>
-        </form>
-    </fieldset>
-
-</body>
-</html>
+require_once __DIR__.'/../config/db.php';
+require_once __DIR__.'/../config/availability_schema.php';
+ensureClinicAvailabilitySchema($conn);
+if(empty($_SESSION['user_id'])||($_SESSION['role']??'')!=='Doctor'){header('Location: ../login.php');exit;}
+$uid=(int)$_SESSION['user_id'];$doctor=mysqli_fetch_assoc(mysqli_query($conn,"SELECT doctor_id FROM doctors WHERE user_id=$uid"));
+if(!$doctor){header('Location: ../register_doctor.php');exit;}$id=(int)$doctor['doctor_id'];$msg='';
+$clinics=mysqli_query($conn,"SELECT c.clinic_id,c.clinic_name FROM doctor_clinic dc JOIN clinics c ON c.clinic_id=dc.clinic_id WHERE dc.doctor_id=$id ORDER BY dc.is_primary DESC,c.clinic_name");
+if(isset($_POST['add'])){$clinic=(int)$_POST['clinic_id'];$day=$_POST['day']??'';$start=$_POST['start']??'';$end=$_POST['end']??'';$duration=(int)$_POST['duration'];$days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];$owned=mysqli_num_rows(mysqli_query($conn,"SELECT 1 FROM doctor_clinic WHERE doctor_id=$id AND clinic_id=$clinic"));if(!$owned||!in_array($day,$days,true)||$start>=$end||!in_array($duration,[15,20,30],true))$msg='<div class="alert alert-error">Select your clinic and a valid time range.</div>';else{$s=mysqli_prepare($conn,'INSERT INTO doctor_availability (doctor_id,clinic_id,day,start_time,end_time,slot_duration) VALUES (?,?,?,?,?,?)');mysqli_stmt_bind_param($s,'iisssi',$id,$clinic,$day,$start,$end,$duration);mysqli_stmt_execute($s);$msg='<div class="alert alert-success">Clinic availability added.</div>';}}
+if(isset($_POST['delete'])){mysqli_query($conn,'DELETE FROM doctor_availability WHERE availability_id='.(int)$_POST['delete'].' AND doctor_id='.$id);$msg='<div class="alert alert-success">Availability removed.</div>';}
+$rows=mysqli_query($conn,"SELECT da.*,c.clinic_name FROM doctor_availability da LEFT JOIN clinics c ON c.clinic_id=da.clinic_id WHERE da.doctor_id=$id ORDER BY c.clinic_name,FIELD(day,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'),start_time");
+?><!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Availability</title><link rel="stylesheet" href="../assets/css/style.css"></head><body class="app-body"><aside class="sidebar"><a class="brand" href="dashboard.php">care<span>connect</span></a><p class="side-label">DOCTOR PORTAL</p><a href="dashboard.php">Overview</a><a href="appointments.php">Appointments</a><a class="active" href="availability.php">Availability</a><a href="clinics.php">Clinics</a><a href="profile.php">Profile</a></aside><main class="dashboard-main"><header class="dash-header"><div><p class="eyebrow">WORKING HOURS</p><h1>Set clinic availability.</h1></div></header><?=$msg?><section class="panel"><form method="post"><div class="form-row"><div class="field"><label>CLINIC</label><select name="clinic_id" required><option value="">Select your clinic</option><?php while($c=mysqli_fetch_assoc($clinics)):?><option value="<?=$c['clinic_id']?>"><?=htmlspecialchars($c['clinic_name'])?></option><?php endwhile;?></select></div><div class="field"><label>DAY</label><select name="day" required><?php foreach(['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'] as $d)echo "<option>$d</option>"?></select></div><div class="field"><label>SLOT LENGTH</label><select name="duration"><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option></select></div><div class="field"><label>START TIME</label><input type="time" name="start" required></div><div class="field"><label>END TIME</label><input type="time" name="end" required></div></div><button class="btn btn-primary" name="add">Add clinic availability</button></form></section><section class="panel" style="margin-top:20px"><div class="panel-head"><h2>Your clinic schedules</h2></div><div class="appointment-list"><?php while($r=mysqli_fetch_assoc($rows)):?><article class="appointment-card"><div class="date-block"><b>Time</b></div><div><h3><?=htmlspecialchars($r['clinic_name']??'Clinic not assigned')?></h3><p><?=$r['day']?> · <?=date('h:i A',strtotime($r['start_time']))?> – <?=date('h:i A',strtotime($r['end_time']))?></p></div><div><?=$r['slot_duration']?> minute slots</div><form method="post"><button class="btn btn-outline" name="delete" value="<?=$r['availability_id']?>">Remove</button></form></article><?php endwhile;?></div></section></main></body></html>

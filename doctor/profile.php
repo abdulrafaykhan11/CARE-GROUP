@@ -13,6 +13,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $msg = "";
+$msgType = "success";
 
 // =======================================================
 // 📥 2. FORM SUBMIT / UPDATE LOGIC
@@ -56,38 +57,42 @@ if (isset($_POST['update_profile_btn'])) {
             }
 
             if (move_uploaded_file($file_tmp, $upload_path)) {
-                // DB me SIRF FILENAME save hoga (Index page ke compatibility ke liye)
                 $image_query_part = ", profile_image = '$new_image_name'";
             }
         } else {
-            $msg .= "<p style='color: orange;'>Image extension not allowed (Only JPG, PNG, WEBP allowed).</p>";
+            $msg = "Image extension not allowed (Only JPG, PNG, WEBP allowed).";
+            $msgType = "error";
         }
     }
 
-    // 3. Check & Update Doctors Table
-    $check_doc = mysqli_query($conn, "SELECT doctor_id FROM doctors WHERE user_id = '$user_id'");
-    
-    if ($check_doc && mysqli_num_rows($check_doc) > 0) {
-        $doc_update = "UPDATE doctors 
-                       SET specialization_id = '$specialization_id',
-                           city_id = '$city_id',
-                           qualification = '$qualification', 
-                           experience_years = '$experience', 
-                           consultation_fee = '$fee', 
-                           full_address = '$full_address',
-                           bio = '$bio'
-                           $image_query_part
-                       WHERE user_id = '$user_id'";
-    } else {
-        $img_val = !empty($new_image_name) ? $new_image_name : 'default.png';
-        $doc_update = "INSERT INTO doctors (user_id, specialization_id, city_id, qualification, experience_years, consultation_fee, full_address, bio, profile_image, pmdc_registration_number, cnic) 
-                       VALUES ('$user_id', '$specialization_id', '$city_id', '$qualification', '$experience', '$fee', '$full_address', '$bio', '$img_val', 'PENDING', '00000-0000000-0')";
-    }
+    if (empty($msg)) {
+        // 3. Check & Update Doctors Table
+        $check_doc = mysqli_query($conn, "SELECT doctor_id FROM doctors WHERE user_id = '$user_id'");
+        
+        if ($check_doc && mysqli_num_rows($check_doc) > 0) {
+            $doc_update = "UPDATE doctors 
+                           SET specialization_id = '$specialization_id',
+                               city_id = '$city_id',
+                               qualification = '$qualification', 
+                               experience_years = '$experience', 
+                               consultation_fee = '$fee', 
+                               full_address = '$full_address',
+                               bio = '$bio'
+                               $image_query_part
+                           WHERE user_id = '$user_id'";
+        } else {
+            $img_val = !empty($new_image_name) ? $new_image_name : 'default.png';
+            $doc_update = "INSERT INTO doctors (user_id, specialization_id, city_id, qualification, experience_years, consultation_fee, full_address, bio, profile_image, pmdc_registration_number, cnic) 
+                           VALUES ('$user_id', '$specialization_id', '$city_id', '$qualification', '$experience', '$fee', '$full_address', '$bio', '$img_val', 'PENDING', '00000-0000000-0')";
+        }
 
-    if (mysqli_query($conn, $doc_update)) {
-        $msg .= "<p style='color: green; background: #e8f8f0; padding: 10px; border-radius: 4px;'>Profile & Picture updated successfully!</p>";
-    } else {
-        $msg .= "<p style='color: red; background: #fde8e8; padding: 10px; border-radius: 4px;'>SQL Error: " . mysqli_error($conn) . "</p>";
+        if (mysqli_query($conn, $doc_update)) {
+            $msg = "Profile & Picture updated successfully!";
+            $msgType = "success";
+        } else {
+            $msg = "SQL Error: " . mysqli_error($conn);
+            $msgType = "error";
+        }
     }
 }
 
@@ -109,121 +114,132 @@ $cities_list          = mysqli_query($conn, "SELECT city_id, city_name FROM citi
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Profile Settings</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 20px; }
-        .profile-card { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .btn-submit { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
-        .btn-submit:hover { background-color: #218838; }
-        .profile-preview { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 3px solid #007bff; }
-    </style>
+    <title>Doctor Profile Settings | Care Connect</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
-<body>
+<body class="app-body">
+    <aside class="sidebar">
+        <a class="brand" href="../index.php">care<span>connect</span></a>
+        <p class="side-label">DOCTOR PORTAL</p>
+        <a href="dashboard.php">⌂ Overview</a>
+        <a href="appointments.php">▣ Appointments</a>
+        <a href="availability.php">◷ Availability</a>
+        <a href="clinics.php">⌖ Clinics</a>
+        <a class="active" href="profile.php">⚙ Profile</a>
+        <a href="../logout.php">↪ Sign out</a>
+    </aside>
 
-<div class="profile-card">
-    <h2>Doctor Profile Settings</h2>
-    <?php echo $msg; ?>
+    <main class="dashboard-main">
+        <header class="dash-header">
+            <div>
+                <p class="eyebrow">ACCOUNT SETTINGS</p>
+                <h1>My Profile</h1>
+            </div>
+        </header>
 
-    <form action="" method="POST" enctype="multipart/form-data">
-        
-        <h3>Personal Details</h3>
+        <section class="panel" style="max-width: 800px;">
+            <div class="panel-head">
+                <div>
+                    <h2>Update Information</h2>
+                </div>
+            </div>
 
-        <!-- Profile Image Display Logic -->
-        <div class="form-group" style="text-align: center;">
-            <?php 
-                $raw_img = $doc_data['profile_image'] ?? '';
+            <?php if ($msg): ?>
+                <div class="alert alert-<?php echo $msgType; ?>"><?php echo $msg; ?></div>
+            <?php endif; ?>
+
+            <form action="" method="POST" enctype="multipart/form-data" class="booking-form">
                 
-                // Agar DB me sirf filename ho (e.g. doctor_profile_123.png)
-                if (!empty($raw_img)) {
-                    // Clean path extraction
-                    $file_only = basename($raw_img); 
-                    $img_src = "../assets/uploads/doctor/profile/" . $file_only;
-                } else {
-                    $img_src = "https://via.placeholder.com/120?text=No+Image";
-                }
-            ?>
-            
-            <img src="<?php echo $img_src; ?>" class="profile-preview" alt="Profile Picture"><br>
-            <label>Change Profile Image:</label>
-            <input type="file" name="profile_image" accept="image/*">
-        </div>
+                <div style="margin-bottom: 30px; text-align: center;">
+                    <?php 
+                        $raw_img = $doc_data['profile_image'] ?? '';
+                        if (!empty($raw_img)) {
+                            $file_only = basename($raw_img); 
+                            $img_src = "../assets/uploads/doctor/profile/" . $file_only;
+                        } else {
+                            $img_src = "https://via.placeholder.com/120?text=No+Image";
+                        }
+                    ?>
+                    <img src="<?php echo $img_src; ?>" alt="Profile Picture" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--gold);"><br>
+                    <div class="field" style="max-width: 300px; margin: auto;">
+                        <label>Change Profile Image</label>
+                        <input type="file" name="profile_image" accept="image/*" style="border:none; padding-top:10px;">
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label>Full Name:</label>
-            <input type="text" name="name" value="<?php echo htmlspecialchars($user_data['full_name'] ?? ''); ?>" required>
-        </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label>FULL NAME</label>
+                        <input type="text" name="name" value="<?php echo htmlspecialchars($user_data['full_name'] ?? ''); ?>" required>
+                    </div>
+                    <div class="field">
+                        <label>EMAIL ADDRESS</label>
+                        <input type="email" name="email" value="<?php echo htmlspecialchars($user_data['email'] ?? ''); ?>" required>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label>Email Address:</label>
-            <input type="email" name="email" value="<?php echo htmlspecialchars($user_data['email'] ?? ''); ?>" required>
-        </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label>PHONE NUMBER</label>
+                        <input type="text" name="phone" value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>" required>
+                    </div>
+                    <div class="field">
+                        <label>SPECIALIZATION</label>
+                        <select name="specialization_id" required>
+                            <option value="">Select Specialization</option>
+                            <?php while ($spec = mysqli_fetch_assoc($specializations_list)): ?>
+                                <option value="<?php echo $spec['specialization_id']; ?>" 
+                                    <?php echo (isset($doc_data['specialization_id']) && $doc_data['specialization_id'] == $spec['specialization_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($spec['specialization_name']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                </div>
 
-        <div class="form-group">
-            <label>Phone Number:</label>
-            <input type="text" name="phone" value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>" required>
-        </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label>CITY</label>
+                        <select name="city_id" required>
+                            <option value="">Select City</option>
+                            <?php while ($city = mysqli_fetch_assoc($cities_list)): ?>
+                                <option value="<?php echo $city['city_id']; ?>" 
+                                    <?php echo (isset($doc_data['city_id']) && $doc_data['city_id'] == $city['city_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($city['city_name']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>QUALIFICATION</label>
+                        <input type="text" name="qualification" value="<?php echo htmlspecialchars($doc_data['qualification'] ?? ''); ?>" required>
+                    </div>
+                </div>
 
-        <hr style="margin: 20px 0;">
+                <div class="form-row">
+                    <div class="field">
+                        <label>EXPERIENCE (YEARS)</label>
+                        <input type="number" name="experience_years" value="<?php echo htmlspecialchars($doc_data['experience_years'] ?? '0'); ?>" min="0" required>
+                    </div>
+                    <div class="field">
+                        <label>CONSULTATION FEE (PKR)</label>
+                        <input type="number" name="consultation_fee" value="<?php echo htmlspecialchars($doc_data['consultation_fee'] ?? '0'); ?>" step="0.01" min="0" required>
+                    </div>
+                </div>
 
-        <h3>Professional Details</h3>
-        
-        <div class="form-group">
-            <label>Specialization:</label>
-            <select name="specialization_id" required>
-                <option value="">Select Specialization</option>
-                <?php while ($spec = mysqli_fetch_assoc($specializations_list)): ?>
-                    <option value="<?php echo $spec['specialization_id']; ?>" 
-                        <?php echo (isset($doc_data['specialization_id']) && $doc_data['specialization_id'] == $spec['specialization_id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($spec['specialization_name']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
-        </div>
+                <div class="field">
+                    <label>FULL CLINIC/HOSPITAL ADDRESS</label>
+                    <input type="text" name="full_address" value="<?php echo htmlspecialchars($doc_data['full_address'] ?? ''); ?>">
+                </div>
 
-        <div class="form-group">
-            <label>City:</label>
-            <select name="city_id" required>
-                <option value="">Select City</option>
-                <?php while ($city = mysqli_fetch_assoc($cities_list)): ?>
-                    <option value="<?php echo $city['city_id']; ?>" 
-                        <?php echo (isset($doc_data['city_id']) && $doc_data['city_id'] == $city['city_id']) ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($city['city_name']); ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
-        </div>
+                <div class="field">
+                    <label>BIO / ABOUT ME</label>
+                    <textarea name="bio" rows="4" style="width:100%; border:0; border-bottom:2px solid var(--line); font-family:inherit; padding:10px 0; background:transparent;"><?php echo htmlspecialchars($doc_data['bio'] ?? ''); ?></textarea>
+                </div>
 
-        <div class="form-group">
-            <label>Qualification:</label>
-            <input type="text" name="qualification" value="<?php echo htmlspecialchars($doc_data['qualification'] ?? ''); ?>" required>
-        </div>
-
-        <div class="form-group">
-            <label>Experience (Years):</label>
-            <input type="number" name="experience_years" value="<?php echo htmlspecialchars($doc_data['experience_years'] ?? '0'); ?>" min="0" required>
-        </div>
-
-        <div class="form-group">
-            <label>Consultation Fee (PKR):</label>
-            <input type="number" name="consultation_fee" value="<?php echo htmlspecialchars($doc_data['consultation_fee'] ?? '0'); ?>" step="0.01" min="0" required>
-        </div>
-
-        <div class="form-group">
-            <label>Full Clinic/Hospital Address:</label>
-            <input type="text" name="full_address" value="<?php echo htmlspecialchars($doc_data['full_address'] ?? ''); ?>">
-        </div>
-
-        <div class="form-group">
-            <label>Bio / About Me:</label>
-            <textarea name="bio" rows="4"><?php echo htmlspecialchars($doc_data['bio'] ?? ''); ?></textarea>
-        </div>
-
-        <button type="submit" name="update_profile_btn" class="btn-submit">Save Profile</button>
-    </form>
-</div>
-
+                <button type="submit" name="update_profile_btn" class="btn btn-primary" style="width:100%;">Save Profile Settings</button>
+            </form>
+        </section>
+    </main>
 </body>
 </html>

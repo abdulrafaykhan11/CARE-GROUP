@@ -1,179 +1,133 @@
 <?php
-// 1. Connection File Include Karein
-include 'config/db.php'; // Apne folder ke mutabik check kar lena (e.g., 'db.php' ya 'config/db.php')
-if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
-    header("Location: login.php?error=please_login");
-    exit();
+require_once 'config/db.php';
+require_once 'config/availability_schema.php';
+ensureClinicAvailabilitySchema($conn);
+if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Patient') {
+  header('Location: login.php');
+  exit;
 }
-$user_id = $_SESSION['user_id'];
-$pat_query = "Select patient_id From patients WHERE user_id = '$user_id'";
-$pat_result = mysqli_query($conn,$pat_query);
-if(mysqli_num_rows($pat_result) > 0){
-    $row = mysqli_fetch_assoc($pat_result);
-    $pati_id = $row['patient_id'];
+$uid = (int) $_SESSION['user_id'];
+$patient = mysqli_fetch_assoc(mysqli_query($conn, "SELECT patient_id FROM patients WHERE user_id=$uid"));
+$doctorId = (int) ($_GET['doctor_id'] ?? 0);
+$doctor = mysqli_fetch_assoc(mysqli_query($conn, "SELECT d.*,u.full_name,u.email,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN specializations s ON s.specialization_id=d.specialization_id JOIN cities c ON c.city_id=d.city_id WHERE d.doctor_id=$doctorId"));
+if (!$patient) {
+  header('Location: register_patients.php');
+  exit;
 }
-
-// 2. Get Doctor ID from URL (Default to 5 for testing)
-$doctor_id = isset($_GET['doctor_id']) ? intval($_GET['doctor_id']) : 5;
-$patient_id = $pati_id; // Testing ke liye dummy Patient ID (Jab login banaoge to $_SESSION['user_id'] se badal dena)
-
-$msg = ""; // Success ya Error message ke liye variable
-
-// =======================================================
-// 📥 3. FORM PROCESS LOGIC (Isi page par data handle hoga)
-// =======================================================
-if (isset($_POST['book_appointment_btn'])) {
-    
-    $doc_id = mysqli_real_escape_string($conn, $_POST['doctor_id']);
-    $pat_id = mysqli_real_escape_string($conn, $_POST['patient_id']);
-    $app_date = mysqli_real_escape_string($conn, $_POST['appointment_date']);
-    $app_time = mysqli_real_escape_string($conn, $_POST['appointment_time']);
-    $reason = mysqli_real_escape_string($conn, $_POST['reason']);
-    $notes = mysqli_real_escape_string($conn, $_POST['notes']);
-
-    // Dropdown value se clinic_id alag kar rahe hain (Kyunki humne value me clinic_id pass ki thi)
-    $clinic_id = intval($_POST['clinic_id']);
-
-    // Insert Query (Saare columns jo tumne bataye)
-    $insert_query = "INSERT INTO appointments 
-                    (doctor_id, patient_id, clinic_id, appointment_date, appointment_time, reason, notes, created_at, updated_at) 
-                    VALUES 
-                    ('$doc_id', '$patient_id', '$clinic_id', '$app_date', '$app_time', '$reason', '$notes', NOW(), NOW())";
-
-    if (mysqli_query($conn, $insert_query)) {
-        $msg = "<div style='padding:15px; background-color:#d4edda; color:#155724; border:1px solid #c3e6cb; border-radius:5px; margin-bottom:20px;'>
-                    <strong>Zabardast!</strong> Appointment successfully book ho gayi hai. Doctor ki approval ka intezar karein.
-                </div>";
-    } else {
-        $msg = "<div style='padding:15px; background-color:#f8d7da; color:#721c24; border:1px solid #f5c6cb; border-radius:5px; margin-bottom:20px;'>
-                    <strong>Error:</strong> Data insert nahi ho saka: " . mysqli_error($conn) . "
-                </div>";
+if (!$doctor) {
+  http_response_code(404);
+  exit('Doctor not found.');
+}
+$availability = [];
+$q = mysqli_query($conn, "SELECT da.*,cl.clinic_name FROM doctor_availability da JOIN clinics cl ON cl.clinic_id=da.clinic_id WHERE da.doctor_id=$doctorId AND da.status='Active' AND da.clinic_id IS NOT NULL");
+while ($r = mysqli_fetch_assoc($q))
+  $availability[] = $r;
+$reserved = [];
+$q = mysqli_query($conn, "SELECT appointment_date,appointment_time FROM appointments WHERE doctor_id=$doctorId AND appointment_date>=CURDATE() AND status NOT IN ('Cancelled','NoShow')");
+while ($r = mysqli_fetch_assoc($q))
+  $reserved[] = $r;
+$msg = '';
+if (isset($_POST['book'])) {
+  $clinic = (int) $_POST['clinic_id'];
+  $date = $_POST['date'] ?? '';
+  $time = $_POST['time'] ?? '';
+  $reason = trim($_POST['reason'] ?? $_POST['reason_dropdown'] ?? '');
+  $notes = trim($_POST['notes'] ?? '');
+  $valid = false;
+  foreach ($availability as $a)
+    if ($a['clinic_id'] == $clinic && date('l', strtotime($date)) === $a['day'] && $time >= $a['start_time'] && $time < $a['end_time']) {
+      $valid = true;
+      break;
     }
+  if (!$valid || !preg_match('/^\d{2}:\d{2}:\d{2}$/', $time))
+    $msg = '<div class="alert alert-error">Please choose an available date and time slot.</div>';
+  elseif ($reason === '')
+    $msg = '<div class="alert alert-error">Please add a reason for your visit.</div>';
+  else {
+    $safeDate = mysqli_real_escape_string($conn, $date);
+    $safeTime = mysqli_real_escape_string($conn, $time);
+    $exists = mysqli_query($conn, "SELECT appointment_id FROM appointments WHERE doctor_id=$doctorId AND appointment_date='$safeDate' AND appointment_time='$safeTime' AND status NOT IN ('Cancelled','NoShow')");
+    if (mysqli_num_rows($exists))
+      $msg = '<div class="alert alert-error">This slot was just booked. Please choose another time.</div>';
+    else {
+      $stmt = mysqli_prepare($conn, 'INSERT INTO appointments (doctor_id,patient_id,clinic_id,appointment_date,appointment_time,reason,notes) VALUES (?,?,?,?,?,?,?)');
+      mysqli_stmt_bind_param($stmt, 'iiissss', $doctorId, $patient['patient_id'], $clinic, $date, $time, $reason, $notes);
+      if (mysqli_stmt_execute($stmt)) {
+        require_once 'config/mail.php';
+        $clinicName = '';
+        foreach ($availability as $a)
+          if ($a['clinic_id'] == $clinic) {
+            $clinicName = $a['clinic_name'];
+            break;
+          }
+        $pemail = mysqli_fetch_assoc(mysqli_query($conn, "SELECT email FROM users WHERE user_id=$uid"))['email'];
+        $mailOk = sendAppointmentEmail(['patient_email' => $pemail, 'patient_name' => $_SESSION['full_name'], 'doctor_email' => $doctor['email'], 'doctor_name' => $doctor['full_name'], 'date' => date('d M Y', strtotime($date)), 'time' => date('h:i A', strtotime($time)), 'clinic' => $clinicName]);
+        $msg = '<div class="alert alert-success">Appointment request sent successfully.' . ($mailOk ? ' Confirmation email sent.' : '') . '</div>';
+      } else
+        $msg = '<div class="alert alert-error">Could not save your request.</div>';
+    }
+  }
 }
+$img = 'assets/uploads/doctor/profile/' . basename($doctor['profile_image'] ?? '');
+?><!doctype html>
+<html>
 
-// =======================================================
-// 🔍 4. FETCH DATA FOR FORM (Clinics aur Availability Joina)
-// =======================================================
-// Is query se hum check kar rahe hain ke doctor kis clinic me baithta hai aur uski timing kya hai
-$query = "SELECT dc.clinic_id, c.clinic_name, da.day, da.start_time, da.end_time, da.slot_duration 
-          FROM doctor_clinic dc
-          JOIN clinics c ON dc.clinic_id = c.clinic_id
-          JOIN doctor_availability da ON dc.doctor_id = da.doctor_id
-          WHERE dc.doctor_id = '$doctor_id'";
-
-$result = mysqli_query($conn, $query);
-?>
-
-<!DOCTYPE html>
-<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Details & Booking</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Book Dr. <?= htmlspecialchars($doctor['full_name']) ?></title>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
+
 <body>
-
-    <div style="max-width: 600px; margin: 30px auto; font-family: Arial, sans-serif;">
-        
-        <!-- Msg Alert Box (Success/Error) -->
-        <?php echo $msg; ?>
-
-        <fieldset style="padding: 20px; border-radius: 8px; border: 2px solid #333;">
-            <legend style="font-size: 1.2rem; font-weight: bold; padding: 0 10px;">Book an Appointment</legend>
-            
-            <!-- action empty "" chora hai taake data isi page par refresh ho kar submit ho -->
-            <form action="" method="POST">
-                
-                <!-- Hidden Fields (Parde ke peeche ka data) -->
-                <input type="hidden" name="doctor_id" value="<?php echo $doctor_id; ?>">
-                <input type="hidden" name="patient_id" value="<?php echo $patient_id; ?>">
-
-                <!-- 1. SELECT CLINIC -->
-                <p>
-                    <label><strong>Select Clinic & Day:</strong></label><br>
-                    <select name="clinic_id" style="width: 100%; padding: 8px; margin-top: 5px;" required>
-                        <option value="">-- Choose Clinic & Available Day --</option>
-                        <?php 
-                        if (mysqli_num_rows($result) > 0) {
-                            while($row = mysqli_fetch_assoc($result)) {
-                                $readable_start = date("h:i A", strtotime($row['start_time']));
-                                $readable_end = date("h:i A", strtotime($row['end_time']));
-                                
-                                // Value me clinic_id ja rahi hai aur text me poori detail dikhegi
-                                echo "<option value='".$row['clinic_id']."'>".$row['clinic_name']." (".$row['day']." : $readable_start - $readable_end)</option>";
-                            }
-                        } else {
-                            echo "<option value='' disabled>No clinics linked or timings set for this doctor.</option>";
-                        }
-                        ?>
-                    </select>
-                </p>
-
-                <!-- 2. APPOINTMENT DATE -->
-                <p>
-                    <label><strong>Select Date:</strong></label><br>
-                    <input type="date" name="appointment_date" style="width: 97%; padding: 8px; margin-top: 5px;" min="<?php echo date('Y-m-d'); ?>" required>
-                </p>
-
-                <!-- 3. DYNAMIC TIME SLOTS BREAKDOWN -->
-                <p>
-                    <label><strong>Available Time Slots (15/20/30 Mins):</strong></label><br>
-                    <select name="appointment_time" style="width: 100%; padding: 8px; margin-top: 5px;" required>
-                        <option value="">-- Select a Time Slot --</option>
-                        
-                        <?php
-                        // Database pointer reset taake dobara loop chal sake slots ke liye
-                        if (mysqli_num_rows($result) > 0) {
-                            mysqli_data_seek($result, 0);
-                            
-                            while ($sched = mysqli_fetch_assoc($result)) {
-                                $current_pointer = strtotime($sched['start_time']);
-                                $closing_pointer = strtotime($sched['end_time']);
-                                $slot_seconds = $sched['slot_duration'] * 60; // Minutes to seconds
-
-                                while ($current_pointer < $closing_pointer) {
-                                    $slot_start = date("h:i A", $current_pointer);
-                                    $next_pointer = $current_pointer + $slot_seconds;
-                                    
-                                    if ($next_pointer > $closing_pointer) {
-                                        break;
-                                    }
-                                    
-                                    $slot_end = date("h:i A", $next_pointer);
-                                    $full_slot_text = "$slot_start - $slot_end";
-
-                                    echo "<option value='$full_slot_text'>$full_slot_text</option>";
-                                    
-                                    $current_pointer = $next_pointer; 
-                                }
-                            }
-                        }
-                        ?>
-                    </select>
-                </p>
-
-                <!-- 4. REASON -->
-                <p>
-                    <label><strong>Reason for Visit (Symptoms):</strong></label><br>
-                    <input type="text" name="reason" placeholder="e.g., Stomach pain, Fever" style="width: 97%; padding: 8px; margin-top: 5px;" required>
-                </p>
-
-                <!-- 5. PATIENT NOTES (Extra info) -->
-                <p>
-                    <label><strong>Additional Notes (Optional):</strong></label><br>
-                    <textarea name="notes" rows="3" placeholder="Any previous medical history or detail..." style="width: 97%; padding: 8px; margin-top: 5px;"></textarea>
-                </p>
-
-                <!-- SUBMIT BUTTON -->
-                <p style="margin-top: 20px;">
-                    <button type="submit" name="book_appointment_btn" style="width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold;">
-                        Confirm & Book Appointment
-                    </button>
-                </p>
-
-            </form>
-        </fieldset>
-    </div>
-
+  <header class="site-header"><a class="brand" href="index.php">care<span>connect</span></a>
+    <nav><a href="patient/dashboard.php">My dashboard</a><a class="btn btn-outline" href="index.php">Back to doctors</a>
+    </nav>
+  </header>
+  <main class="booking-layout">
+    <aside class="doctor-summary"><img src="<?= htmlspecialchars($img) ?>" onerror="this.style.display='none'" alt="">
+      <p class="eyebrow"><?= htmlspecialchars($doctor['specialization_name']) ?></p>
+      <h1>Dr. <?= htmlspecialchars($doctor['full_name']) ?></h1>
+      <p><?= htmlspecialchars($doctor['qualification']) ?> · <?= intval($doctor['experience_years']) ?> years’ experience
+      </p>
+      <p class="note"><?= htmlspecialchars($doctor['bio'] ?? '') ?></p>
+      <hr>
+      <p>Location: <?= htmlspecialchars($doctor['city_name']) ?></p>
+      <p>Consultation fee: <b>PKR <?= number_format($doctor['consultation_fee']) ?></b></p>
+    </aside>
+    <section class="booking-form">
+      <p class="eyebrow">REQUEST A VISIT</p>
+      <h2>Choose a convenient time</h2><?= $msg ?>
+      <form method="post">
+        <div class="field"><label>CLINIC</label><select name="clinic_id" id="clinic" required>
+            <option value="">Choose clinic</option><?php foreach ($availability as $a): ?>
+              <option value="<?= $a['clinic_id'] ?>"><?= htmlspecialchars($a['clinic_name']) ?> · <?= $a['day'] ?>
+                (<?= date('h:i A', strtotime($a['start_time'])) ?>–<?= date('h:i A', strtotime($a['end_time'])) ?>)</option>
+            <?php endforeach; ?>
+          </select></div>
+        <div class="form-row">
+          <div class="field"><label>DATE</label><input id="date" type="date" name="date" min="<?= date('Y-m-d') ?>"
+              required></div>
+          <div class="field"><label>AVAILABLE TIME</label><select id="time" name="time" required>
+              <option value="">Choose a clinic and date</option>
+            </select></div>
+        </div>
+        <div class="field"><label>REASON FOR VISIT</label><select name="reason_dropdown" id="reasonDropdown" required>
+            <option value="">Select a reason</option>
+            <option>General Checkup</option>
+            <option>Fever / Cold</option>
+            <option>Skin Issues</option>
+            <option>Orthopedic Pain</option>
+            <option>Follow-up</option>
+            <option value="Other">Other</option>
+          </select><input name="reason" id="otherReason" maxlength="200" style="display:none;margin-top:10px"
+            placeholder="Please specify your reason" disabled></div>
+        <div class="field"><label>NOTES (OPTIONAL)</label><textarea name="notes" rows="3" maxlength="1000"></textarea>
+        </div><button class="btn btn-primary" name="book" style="width:100%">Request appointment</button>
+      </form>
+    </section>
+  </main>
+  <script>const availability = <?= json_encode($availability) ?>, reserved = <?= json_encode($reserved) ?>, clinic = document.querySelector('#clinic'), date = document.querySelector('#date'), time = document.querySelector('#time'), hint = document.querySelector('#scheduleHint'), days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']; const dayFor = v => days[new Date(v + 'T00:00:00').getDay()], ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), schedules = () => availability.filter(x => String(x.clinic_id) === String(clinic.value)); function slots() { time.innerHTML = '<option value="">Select a time</option>'; if (!clinic.value || !date.value) return; let added = 0; schedules().filter(x => x.day === dayFor(date.value)).forEach(x => { let s = x.start_time.split(':').map(Number), e = x.end_time.split(':').map(Number), cur = s[0] * 60 + s[1], end = e[0] * 60 + e[1], dur = Number(x.slot_duration); for (; cur + dur <= end; cur += dur) { let v = String(Math.floor(cur / 60)).padStart(2, '0') + ':' + String(cur % 60).padStart(2, '0') + ':00'; if (reserved.some(r => r.appointment_date === date.value && r.appointment_time === v)) continue; time.add(new Option(new Date('2000-01-01T' + v).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), v)); added++; } }); hint.textContent = added ? 'Only unbooked slots are shown.' : 'No unbooked slots remain for this date.' } function chooseNextDate() { let active = schedules().map(x => x.day), d = new Date(); d.setHours(0, 0, 0, 0); for (let i = 0; i < 14; i++, d.setDate(d.getDate() + 1))if (active.includes(days[d.getDay()])) { date.value = ymd(d); break } } clinic.addEventListener('change', () => { chooseNextDate(); slots() }); date.addEventListener('change', slots); document.querySelector('#reasonDropdown').addEventListener('change', e => { let o = document.querySelector('#otherReason'), other = e.target.value === 'Other'; o.style.display = other ? 'block' : 'none'; o.disabled = !other; o.required = other; if (!other) o.value = '' });</script>
 </body>
+
 </html>

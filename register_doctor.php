@@ -4,74 +4,8 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php?error=please_login");
     exit();
 }
-?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Registration</title>
-</head>
-
-<body>
-    <h1>Doctor Profile Registration</h1>
-
-    <form action="" method="post" enctype="multipart/form-data">
-        FULL ADDRESS : <input type="text" name="full_address" required><br><br>
-        EXPERIENCE YEARS : <input type="number" name="experience" min="0" required><br><br>
-        QUALIFICATION : <input type="text" name="qualification" placeholder="MBBS, FCPS" required><br><br>
-        PMDC REGISTRATION NUMBER : <input type="text" name="pmdc" placeholder="12345-P / 98765-D" required><br><br>
-        
-        CNIC NUMBER : <input type="text" name="cnic" placeholder="42101-1234567-1" required><br><br>
-        
-        LICENSE CERTIFICATE : <input type="file" name="license" accept=".pdf,.jpg,.jpeg,.png" required><br><br>
-        DEGREE CERTIFICATE : <input type="file" name="degree" accept=".pdf,.jpg,.jpeg,.png" required><br><br>
-        CONSULTATION FEE : <input type="number" name="fee" min="0" max="50000" required><br><br>
-        PROFILE IMAGE : <input type="file" name="img" accept="image/*" required><br><br>
-
-        SPECIALIZATION : 
-        <select name="specialization_id" required>
-            <option value="">SELECT</option>
-            <?php
-            $spec_query = "SELECT specialization_id, specialization_name FROM specializations";
-            $spec_result = mysqli_query($conn, $spec_query);
-            while ($spec = mysqli_fetch_assoc($spec_result)) {
-                echo "<option value='" . $spec['specialization_id'] . "'>" . $spec['specialization_name'] . "</option>";
-            }
-            ?>
-        </select><br><br>
-
-        CITY : 
-        <select name="city_id" required>
-            <option value="">Select City</option>
-            <?php
-            $cityQuery = "SELECT city_id, city_name FROM cities";
-            $cityResult = mysqli_query($conn, $cityQuery);
-            while ($city = mysqli_fetch_assoc($cityResult)) {
-                echo "<option value='" . $city['city_id'] . "'>" . $city['city_name'] . "</option>";
-            }
-            ?>
-        </select><br><br>
-
-        GENDER : 
-        <select name="gender" required>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select><br><br>
-
-        DATE OF BIRTH : <input type="date" name="dob" required><br><br>
-        BIO : <textarea name="bio" rows="4" cols="30" required></textarea><br><br>
-        <input type="submit" name="register_doctor" value="Register Doctor"><br>
-    </form>
-</body>
-
-</html>
-
-<?php
+$error = '';
 if (isset($_POST["register_doctor"])) {
-
     $cnicPattern = "/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/";
     $pmdcPattern = "/^[0-9]{4,7}-[A-Za-z]{1}$/";
 
@@ -141,22 +75,142 @@ if (isset($_POST["register_doctor"])) {
                 $result = mysqli_query($conn, $query);
 
                 if ($result) {
-                    echo "<script>alert('Doctor profile created successfully!'); window.location.href = 'login.php';</script>";
+                    $_SESSION['role'] = 'Doctor';
+                    header("Location: doctor/dashboard.php");
                     exit();
                 } else {
-                    echo "Database Error: " . mysqli_error($conn);
+                    $error = "Database Error: " . mysqli_error($conn);
                 }
 
             } else {
-                echo "Error in uploading files. Please try again.";
+                $error = "Error in uploading files. Please try again.";
             }
 
         } else {
-            echo "Error: Degree and License files must be in PDF, JPG, JPEG, or PNG format.";
+            $error = "Error: Degree and License files must be in PDF, JPG, JPEG, or PNG format.";
         }
 
     } else {
-        echo "Error: make sure all fields are filled correctly and files are uploaded.";
+        $error = "Error: make sure all fields are filled correctly and files are uploaded.";
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Registration | Care Connect</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="auth-page">
+    <main class="auth-card" style="width: min(700px, 100%);">
+        <a class="brand" href="index.php">care<span>connect</span></a>
+        <h1>Doctor Profile Registration</h1>
+        
+        <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
+
+        <form action="" method="post" enctype="multipart/form-data">
+            <div class="form-row">
+                <div class="field">
+                    <label>FULL ADDRESS</label>
+                    <input type="text" name="full_address" required>
+                </div>
+                <div class="field">
+                    <label>EXPERIENCE YEARS</label>
+                    <input type="number" name="experience" min="0" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>QUALIFICATION</label>
+                    <input type="text" name="qualification" placeholder="MBBS, FCPS" required>
+                </div>
+                <div class="field">
+                    <label>PMDC REGISTRATION NUMBER</label>
+                    <input type="text" name="pmdc" placeholder="12345-P / 98765-D" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>CNIC NUMBER</label>
+                    <input type="text" name="cnic" placeholder="42101-1234567-1" required>
+                </div>
+                <div class="field">
+                    <label>CONSULTATION FEE (PKR)</label>
+                    <input type="number" name="fee" min="0" max="50000" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>LICENSE CERTIFICATE</label>
+                    <input type="file" name="license" accept=".pdf,.jpg,.jpeg,.png" required style="border:none; padding:0; padding-top:10px;">
+                </div>
+                <div class="field">
+                    <label>DEGREE CERTIFICATE</label>
+                    <input type="file" name="degree" accept=".pdf,.jpg,.jpeg,.png" required style="border:none; padding:0; padding-top:10px;">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>PROFILE IMAGE</label>
+                <input type="file" name="img" accept="image/*" required style="border:none; padding:0; padding-top:10px;">
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>SPECIALIZATION</label>
+                    <select name="specialization_id" required>
+                        <option value="">SELECT</option>
+                        <?php
+                        $spec_query = "SELECT specialization_id, specialization_name FROM specializations";
+                        $spec_result = mysqli_query($conn, $spec_query);
+                        while ($spec = mysqli_fetch_assoc($spec_result)) {
+                            echo "<option value='" . $spec['specialization_id'] . "'>" . htmlspecialchars($spec['specialization_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>CITY</label>
+                    <select name="city_id" required>
+                        <option value="">Select City</option>
+                        <?php
+                        $cityQuery = "SELECT city_id, city_name FROM cities";
+                        $cityResult = mysqli_query($conn, $cityQuery);
+                        while ($city = mysqli_fetch_assoc($cityResult)) {
+                            echo "<option value='" . $city['city_id'] . "'>" . htmlspecialchars($city['city_name']) . "</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>GENDER</label>
+                    <select name="gender" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>DATE OF BIRTH</label>
+                    <input type="date" name="dob" required>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>BIO</label>
+                <textarea name="bio" rows="4" style="width:100%; border:0; border-bottom:2px solid var(--line); font-family:inherit; padding:10px 0; background:transparent;" required></textarea>
+            </div>
+            
+            <button class="btn btn-primary" type="submit" name="register_doctor" style="width:100%; margin-top:20px;">Complete Registration</button>
+        </form>
+    </main>
+</body>
+</html>

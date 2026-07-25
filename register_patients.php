@@ -4,55 +4,7 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php?error=please_login");
     exit();
 }
-?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <h1>Patient Registration</h1>
-    <form action="" method="post" enctype="multipart/form-data">
-        FULLADDRESS : <input type="text" name="full_address"><br>
-        GENDER : <select name="gender" required>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-        </select><br><br>
-        CITY : <select name="city_id" required>
-            <option value="">Select City</option>
-            <?php
-                $cityQuery = "SELECT city_id,city_name FROM cities";
-                $cityResult = mysqli_query($conn,$cityQuery);
-                while($city = mysqli_fetch_assoc($cityResult)){
-                    echo "<option value='".$city['city_id']."'>".$city['city_name']."</option>";
-                }
-            ?>
-        </select>
-        DATE OF BIRTH : <input type="date" name="dob"><br>
-        BLOOD GROUP : <select name="blood_group" required>
-            <option value="A+">A+</option>
-            <option value="A-">A-</option>
-            <option value="B+">B+</option>
-            <option value="B-">B-</option>
-            <option value="AB+">AB+</option>
-            <option value="AB-">AB-</option>
-            <option value="O+">O+</option>
-            <option value="O-">O-</option>
-        </select><br>
-        EMERGENCY CONTACT NAME : <input type="text" name="emergency_contact_name"><br>
-        EMERGENCY CONTACT NUMBER : <input type="text" name="emergency_contact_number"><br>
-        PROFILE PICTURE : <input type="file" name="profile_picture"><br>
-        <input type="submit" name="register_patient" value="Register">
-    </form>
-</body>
-
-</html>
-<?php
+$error = '';
 if (isset($_POST['register_patient'])) {
     $phonePattern = "/^((\+92)|(0092)|(0))?3[0-9]{2}[-?\s]?[0-9]{7}$/";
     if (
@@ -85,20 +37,106 @@ if (isset($_POST['register_patient'])) {
             $result = mysqli_query($conn,$query);
             if($result){
                 $_SESSION['patient_id'] = mysqli_insert_id($conn);
-                echo "Profile created successfull";
-                echo "<script>window.location.href = 'login.php'</script>";
+                $_SESSION['role'] = 'Patient';
+                header("Location: patient/dashboard.php");
                 exit();
             }
             else{
-                echo "Error";
+                $error = "Error saving to database.";
             }
         }
         else{
-            echo "error in uploading image";
+            $error = "Error uploading image.";
         }
     }
     else{
-        echo "Field's can't be empty or register yourself";
+        $error = "Fields can't be empty and must be valid.";
     }
 }
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Registration | Care Connect</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="auth-page">
+    <main class="auth-card" style="width: min(600px, 100%);">
+        <a class="brand" href="index.php">care<span>connect</span></a>
+        <h1>Patient Registration</h1>
+        
+        <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
+
+        <form action="" method="post" enctype="multipart/form-data">
+            <div class="field">
+                <label>FULL ADDRESS</label>
+                <input type="text" name="full_address" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="field">
+                    <label>CITY</label>
+                    <select name="city_id" required>
+                        <option value="">Select City</option>
+                        <?php
+                            $cityQuery = "SELECT city_id,city_name FROM cities";
+                            $cityResult = mysqli_query($conn,$cityQuery);
+                            while($city = mysqli_fetch_assoc($cityResult)){
+                                echo "<option value='".$city['city_id']."'>".$city['city_name']."</option>";
+                            }
+                        ?>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>GENDER</label>
+                    <select name="gender" required>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>DATE OF BIRTH</label>
+                    <input type="date" name="dob" required>
+                </div>
+                <div class="field">
+                    <label>BLOOD GROUP</label>
+                    <select name="blood_group" required>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label>EMERGENCY CONTACT NAME</label>
+                    <input type="text" name="emergency_contact_name" required>
+                </div>
+                <div class="field">
+                    <label>EMERGENCY CONTACT NUMBER</label>
+                    <input type="text" name="emergency_contact_number" required placeholder="0300-1234567">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>PROFILE PICTURE</label>
+                <input type="file" name="profile_picture" required style="border:none; padding:0; padding-top:10px;">
+            </div>
+            
+            <button class="btn btn-primary" type="submit" name="register_patient" style="width:100%; margin-top:20px;">Complete Registration</button>
+        </form>
+    </main>
+</body>
+</html>
