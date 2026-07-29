@@ -17,109 +17,129 @@ $availability = mysqli_query($conn, "SELECT da.*,cl.clinic_name FROM doctor_avai
 $appointmentsCount = oneCount($conn, "SELECT COUNT(*) total FROM appointments WHERE doctor_id=$doctorId");
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Doctor Review | Admin</title>
+    <title>Practitioner Credential Review | Admin Nexus</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
-<body class="app-body admin-body">
-    <?php adminSidebar('doctors'); ?>
-    <main class="dashboard-main admin-main">
-        <header class="admin-page-head">
-            <div><p class="eyebrow">DOCTOR REVIEW</p><h1>Dr. <?=h($doctor['full_name'])?></h1><p>Verify identity, PMDC number, CNIC, license certificate, and degree before making this doctor visible to patients.</p></div>
-            <a class="btn btn-outline" href="doctors.php">Back to doctors</a>
-        </header>
-        <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
+<body>
+    <div class="dash-container">
+        <?php adminSidebar('doctors'); ?>
+        <main class="dash-content">
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">DOCTOR VERIFICATION TELEMETRY</p>
+                    <h2>Dr. <?=h($doctor['full_name'])?> Credentials</h2>
+                </div>
+                <a class="btn btn-outline" href="doctors.php">Back to Doctors Queue</a>
+            </header>
 
-        <section class="admin-profile-layout">
-            <aside class="panel admin-profile-summary">
-                <?php if($photo): ?><img src="<?=h($photo)?>" onerror="this.style.display='none'" alt=""><?php endif; ?>
-                <span class="status status-<?=h($doctor['verification_status'])?>"><?=h($doctor['verification_status'])?></span>
-                <h2>Dr. <?=h($doctor['full_name'])?></h2>
-                <p><?=h($doctor['specialization_name'])?> - <?=h($doctor['city_name'])?></p>
-                <dl>
-                    <div><dt>Email</dt><dd><?=h($doctor['email'])?></dd></div>
-                    <div><dt>Phone</dt><dd><?=h($doctor['phone'])?></dd></div>
-                    <div><dt>Account</dt><dd><?=h($doctor['user_status'])?></dd></div>
-                    <div><dt>Appointments</dt><dd><?=$appointmentsCount?></dd></div>
-                </dl>
-                <form method="post" class="admin-approval-box">
-                    <input type="hidden" name="action" value="set_doctor_verification">
-                    <input type="hidden" name="doctor_id" value="<?=$doctorId?>">
-                    <label>Verification decision</label>
-                    <select name="verification_status">
-                        <?php foreach(['Pending','Verified','Rejected'] as $s): ?><option <?=$doctor['verification_status']===$s?'selected':''?>><?=$s?></option><?php endforeach; ?>
-                    </select>
-                    <button class="btn btn-primary">Save decision</button>
-                </form>
-            </aside>
+            <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
 
-            <section class="admin-profile-main">
-                <article class="panel">
-                    <div class="panel-head"><div><p class="eyebrow">IDENTITY</p><h2>Professional profile</h2></div></div>
-                    <div class="admin-detail-grid">
-                        <div><span>PMDC registration</span><strong><?=h($doctor['pmdc_registration_number'])?></strong></div>
-                        <div><span>CNIC</span><strong><?=h($doctor['cnic'])?></strong></div>
-                        <div><span>Qualification</span><strong><?=h($doctor['qualification'])?></strong></div>
-                        <div><span>Experience</span><strong><?=intval($doctor['experience_years'])?> years</strong></div>
-                        <div><span>Fee</span><strong>PKR <?=number_format((float)$doctor['consultation_fee'])?></strong></div>
-                        <div><span>Gender</span><strong><?=h($doctor['gender'])?></strong></div>
-                        <div><span>Date of birth</span><strong><?=h($doctor['date_of_birth'])?></strong></div>
-                        <div><span>Verified by</span><strong><?=h($doctor['verified_by_name'] ?: 'Not verified')?></strong></div>
+            <div style="display: grid; grid-template-columns: 320px 1fr; gap: 28px; align-items: flex-start;">
+                <!-- Summary Card -->
+                <aside class="profile-shard" style="padding: 24px; text-align: center;">
+                    <img src="<?=h($photo ?: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300')?>" style="width: 120px; height: 120px; border-radius: 20px; border: 3px solid var(--cyan-neon); object-fit: cover; margin-bottom: 16px;" alt="">
+                    
+                    <span class="status-pill status-<?=strtolower($doctor['verification_status'])?>" style="margin-bottom: 12px; display: inline-block;">
+                        <?=h($doctor['verification_status'])?>
+                    </span>
+                    <h3 style="font-size: 22px; color: #FFF; margin: 6px 0;">Dr. <?=h($doctor['full_name'])?></h3>
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;"><?=h($doctor['specialization_name'])?> &middot; <?=h($doctor['city_name'])?></p>
+
+                    <div style="text-align: left; background: rgba(4,8,20,0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; font-size: 13px; margin-bottom: 20px;">
+                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Email:</strong> <span style="color: #FFF; font-family: var(--font-mono);"><?=h($doctor['email'])?></span></div>
+                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Phone:</strong> <span style="color: #FFF; font-family: var(--font-mono);"><?=h($doctor['phone'])?></span></div>
+                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Account:</strong> <span style="color: var(--cyan-neon); font-weight: 700;"><?=h($doctor['user_status'])?></span></div>
+                        <div><strong style="color: var(--text-muted);">Total Visits:</strong> <span style="color: var(--emerald-bio); font-family: var(--font-mono); font-weight: 700;"><?=$appointmentsCount?></span></div>
                     </div>
-                    <div class="admin-long-text">
-                        <span>Full address</span>
-                        <p><?=h($doctor['full_address'])?></p>
-                        <span>Bio</span>
-                        <p><?=h($doctor['bio'])?></p>
-                    </div>
-                </article>
 
-                <article class="panel">
-                    <div class="panel-head"><div><p class="eyebrow">DOCUMENTS</p><h2>Certificates</h2></div></div>
-                    <div class="admin-document-grid">
-                        <?php foreach([['License certificate',$license],['Degree certificate',$degree]] as $doc): ?>
-                            <div class="admin-document-card">
-                                <h3><?=h($doc[0])?></h3>
-                                <?php if($doc[1]):
-                                    $ext = strtolower(pathinfo($doc[1], PATHINFO_EXTENSION));
-                                ?>
-                                    <?php if(in_array($ext, ['jpg','jpeg','png','webp'], true)): ?>
-                                        <a href="<?=h($doc[1])?>" target="_blank"><img src="<?=h($doc[1])?>" alt=""></a>
-                                    <?php else: ?>
-                                        <iframe src="<?=h($doc[1])?>"></iframe>
-                                    <?php endif; ?>
-                                    <a class="btn btn-outline" href="<?=h($doc[1])?>" target="_blank">Open document</a>
-                                <?php else: ?>
-                                    <p>No document uploaded.</p>
-                                <?php endif; ?>
+                    <form method="post" style="background: rgba(0, 242, 254, 0.05); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; text-align: left;">
+                        <input type="hidden" name="action" value="set_doctor_verification">
+                        <input type="hidden" name="doctor_id" value="<?=$doctorId?>">
+                        <label style="font-size: 11px; font-family: var(--font-mono); color: var(--cyan-neon); font-weight: 700;">VERIFICATION DECISION</label>
+                        <select name="verification_status" style="width: 100%; margin: 8px 0 14px; padding: 10px;">
+                            <?php foreach(['Pending','Verified','Rejected'] as $s): ?>
+                                <option <?=$doctor['verification_status']===$s?'selected':''?>><?=$s?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="btn btn-primary" style="width: 100%;"><span>❖ Commit Decision</span></button>
+                    </form>
+                </aside>
+
+                <!-- Detailed Information & Certificate Panels -->
+                <section style="display: grid; gap: 28px;">
+                    <!-- Identity Credentials Shard -->
+                    <article class="cyber-table-wrap" style="margin: 0;">
+                        <p class="eyebrow">BIO-METRIC & REGISTRATION TELEMETRY</p>
+                        <h3 style="margin:0 0 20px; color:#FFF;">Credentials Verification</h3>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">PMDC REGISTRATION #</span>
+                                <strong style="display: block; font-size: 16px; color: var(--cyan-neon); margin-top: 4px; font-family: var(--font-mono);"><?=h($doctor['pmdc_registration_number'])?></strong>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                </article>
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">CNIC NUMBER</span>
+                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px; font-family: var(--font-mono);"><?=h($doctor['cnic'])?></strong>
+                            </div>
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">QUALIFICATION</span>
+                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px;"><?=h($doctor['qualification'])?></strong>
+                            </div>
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">EXPERIENCE</span>
+                                <strong style="display: block; font-size: 16px; color: var(--emerald-bio); margin-top: 4px;"><?=intval($doctor['experience_years'])?> Years</strong>
+                            </div>
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">CONSULTATION FEE</span>
+                                <strong style="display: block; font-size: 16px; color: var(--cyan-neon); margin-top: 4px;">PKR <?=number_format((float)$doctor['consultation_fee'])?></strong>
+                            </div>
+                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                                <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">VERIFIED BY ADMIN</span>
+                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px;"><?=h($doctor['verified_by_name'] ?: 'Not Verified Yet')?></strong>
+                            </div>
+                        </div>
 
-                <section class="admin-split">
-                    <article class="panel">
-                        <div class="panel-head"><div><p class="eyebrow">CLINICS</p><h2>Linked clinics</h2></div></div>
-                        <div class="admin-simple-list">
-                            <?php while($c = mysqli_fetch_assoc($clinics)): ?>
-                                <div><strong><?=h($c['clinic_name'])?></strong><span><?=h($c['city_name'])?> <?=((int)$c['is_primary'] ? '- Primary' : '')?></span></div>
-                            <?php endwhile; ?>
+                        <div style="background: rgba(4,8,20,0.8); padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <strong style="color: var(--cyan-neon); font-size: 12px; font-family: var(--font-mono);">BIO & CARE PHILOSOPHY</strong>
+                            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin: 8px 0 0;"><?=h($doctor['bio'])?></p>
                         </div>
                     </article>
-                    <article class="panel">
-                        <div class="panel-head"><div><p class="eyebrow">SCHEDULE</p><h2>Availability</h2></div></div>
-                        <div class="admin-simple-list">
-                            <?php while($a = mysqli_fetch_assoc($availability)): ?>
-                                <div><strong><?=h($a['clinic_name'] ?? 'Clinic not assigned')?></strong><span><?=$a['day']?> - <?=date('h:i A', strtotime($a['start_time']))?> to <?=date('h:i A', strtotime($a['end_time']))?> - <?=h($a['status'])?></span></div>
-                            <?php endwhile; ?>
+
+                    <!-- Document Certificates -->
+                    <article class="cyber-table-wrap" style="margin: 0;">
+                        <p class="eyebrow">UPLOADED CERTIFICATE ASSETS</p>
+                        <h3 style="margin:0 0 20px; color:#FFF;">License & Degree Verification</h3>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                            <?php foreach([['PMDC License Certificate',$license],['Medical Degree Certificate',$degree]] as $doc): ?>
+                                <div style="background: rgba(4,8,20,0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 18px;">
+                                    <h4 style="margin: 0 0 14px; color: #FFF; font-size: 16px;"><?=h($doc[0])?></h4>
+                                    <?php if($doc[1]):
+                                        $ext = strtolower(pathinfo($doc[1], PATHINFO_EXTENSION));
+                                    ?>
+                                        <?php if(in_array($ext, ['jpg','jpeg','png','webp'], true)): ?>
+                                            <a href="<?=h($doc[1])?>" target="_blank">
+                                                <img src="<?=h($doc[1])?>" style="width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 14px;" alt="">
+                                            </a>
+                                        <?php else: ?>
+                                            <iframe src="<?=h($doc[1])?>" style="width: 100%; height: 220px; border: none; border-radius: 8px; margin-bottom: 14px;"></iframe>
+                                        <?php endif; ?>
+                                        <a class="btn btn-outline" href="<?=h($doc[1])?>" target="_blank" style="width: 100%; text-align: center;">Open Document File</a>
+                                    <?php else: ?>
+                                        <p style="color: var(--text-muted);">No document uploaded.</p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </article>
                 </section>
-            </section>
-        </section>
-    </main>
+            </div>
+        </main>
+    </div>
 </body>
 </html>

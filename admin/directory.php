@@ -8,95 +8,174 @@ $cities = mysqli_query($conn, "SELECT city_id,city_name,state,status FROM cities
 $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE status='Active' ORDER BY city_name ASC");
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Directory | Admin</title>
+    <title>Directory Network Nodes | Admin Nexus</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
-<body class="app-body admin-body">
-    <?php adminSidebar('directory'); ?>
-    <main class="dashboard-main admin-main">
-        <header class="admin-page-head">
-            <div><p class="eyebrow">DIRECTORY CONTROL</p><h1>Clinics, specialties, cities</h1><p>Control what appears in public search and doctor registration forms.</p></div>
-            <a class="btn btn-outline" href="dashboard.php">Overview</a>
-        </header>
-        <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
-
-        <section class="admin-directory-actions">
-            <article class="panel admin-clean-panel">
-                <div class="panel-head"><div><p class="eyebrow">ADD CLINIC</p><h2>Clinic</h2></div></div>
-                <form method="post" class="booking-form">
-                    <input type="hidden" name="action" value="add_clinic">
-                    <div class="field"><label>CLINIC NAME</label><input name="clinic_name" required></div>
-                    <div class="field"><label>CITY</label><select name="city_id" required><option value="">Select city</option><?php while($city = mysqli_fetch_assoc($cityOptions)): ?><option value="<?=$city['city_id']?>"><?=h($city['city_name'])?></option><?php endwhile; ?></select></div>
-                    <div class="field"><label>ADDRESS</label><input name="address" required></div>
-                    <div class="form-row"><div class="field"><label>PHONE</label><input name="phone"></div><div class="field"><label>EMAIL</label><input type="email" name="email"></div></div>
-                    <button class="btn btn-primary">Add clinic</button>
-                </form>
-            </article>
-            <article class="panel admin-clean-panel">
-                <div class="panel-head"><div><p class="eyebrow">ADD SPECIALTY</p><h2>Specialization</h2></div></div>
-                <form method="post" class="booking-form">
-                    <input type="hidden" name="action" value="add_specialization">
-                    <div class="field"><label>NAME</label><input name="specialization_name" required></div>
-                    <div class="field"><label>DESCRIPTION</label><textarea name="description" rows="3" required></textarea></div>
-                    <div class="field"><label>GUIDE OVERVIEW</label><textarea name="overview" rows="3"></textarea></div>
-                    <div class="field"><label>WHEN TO BOOK (ONE PER LINE)</label><textarea name="when_to_book" rows="4"></textarea></div>
-                    <div class="field"><label>CARE TIPS (ONE PER LINE)</label><textarea name="care_points" rows="4"></textarea></div>
-                    <button class="btn btn-primary">Add specialization</button>
-                </form>
-            </article>
-            <article class="panel admin-clean-panel">
-                <div class="panel-head"><div><p class="eyebrow">ADD CITY</p><h2>City</h2></div></div>
-                <form method="post" class="booking-form">
-                    <input type="hidden" name="action" value="add_city">
-                    <div class="field"><label>CITY</label><input name="city_name" required></div>
-                    <div class="field"><label>STATE / PROVINCE</label><input name="state"></div>
-                    <button class="btn btn-primary">Add city</button>
-                </form>
-            </article>
-        </section>
-
-        <section class="admin-directory-stack">
-            <article class="panel admin-table-panel directory-admin-list">
-                <div class="panel-head"><div><p class="eyebrow">CLINICS</p><h2>Website locations</h2></div></div>
-                <div class="admin-table compact">
-                    <?php while($c = mysqli_fetch_assoc($clinics)): ?>
-                        <article>
-                            <div><strong>#<?=$c['clinic_id']?> - <?=h($c['clinic_name'])?></strong><span><?=h($c['city_name'])?> - <?=$c['doctors_count']?> doctors</span><small><?=h($c['address'])?></small></div>
-                            <form method="post" class="inline-admin-form"><input type="hidden" name="action" value="set_clinic_status"><input type="hidden" name="clinic_id" value="<?=$c['clinic_id']?>"><select name="status"><?php foreach(['Active','Inactive'] as $s): ?><option <?=$c['status']===$s?'selected':''?>><?=$s?></option><?php endforeach; ?></select><button class="btn btn-primary">Save</button></form>
-                            <form method="post" onsubmit="return confirm('Remove this clinic from website?');"><input type="hidden" name="action" value="delete_clinic"><input type="hidden" name="clinic_id" value="<?=$c['clinic_id']?>"><button class="btn btn-outline danger-btn">Remove</button></form>
-                        </article>
-                    <?php endwhile; ?>
+<body>
+    <div class="dash-container">
+        <?php adminSidebar('directory'); ?>
+        <main class="dash-content">
+            <header class="section-heading">
+                <div>
+                    <p class="eyebrow">DIRECTORY & NETWORK NODES</p>
+                    <h2>Clinics, Specializations & City Nodes</h2>
                 </div>
-            </article>
-            <article class="panel admin-table-panel directory-admin-list">
-                <div class="panel-head"><div><p class="eyebrow">SPECIALIZATIONS</p><h2>Public categories</h2></div></div>
-                <div class="admin-table compact">
-                    <?php while($s = mysqli_fetch_assoc($specializations)): ?>
-                        <article>
-                            <div><strong><?=h($s['specialization_name'])?></strong><span><?=$s['doctors_count']?> doctors</span><small><?=h($s['description'])?></small></div>
-                            <form method="post" class="inline-admin-form"><input type="hidden" name="action" value="set_specialization_status"><input type="hidden" name="specialization_id" value="<?=$s['specialization_id']?>"><select name="status"><?php foreach(['Active','Inactive'] as $st): ?><option <?=$s['status']===$st?'selected':''?>><?=$st?></option><?php endforeach; ?></select><button class="btn btn-primary">Save</button></form>
-                            <form method="post" onsubmit="return confirm('Remove this specialization from search?');"><input type="hidden" name="action" value="delete_specialization"><input type="hidden" name="specialization_id" value="<?=$s['specialization_id']?>"><button class="btn btn-outline danger-btn">Remove</button></form>
-                        </article>
-                    <?php endwhile; ?>
-                </div>
-            </article>
-        </section>
+                <a class="btn btn-outline" href="dashboard.php">Overview HUD</a>
+            </header>
 
-        <section class="panel admin-table-panel directory-admin-list">
-            <div class="panel-head"><div><p class="eyebrow">CITIES</p><h2>City visibility</h2></div></div>
-            <div class="admin-table relaxed">
-                <?php while($city = mysqli_fetch_assoc($cities)): ?>
-                    <article>
-                        <div><strong><?=h($city['city_name'])?></strong><span><?=h($city['state'])?></span></div>
-                        <form method="post" class="inline-admin-form"><input type="hidden" name="action" value="set_city_status"><input type="hidden" name="city_id" value="<?=$city['city_id']?>"><select name="status"><?php foreach(['Active','Inactive'] as $s): ?><option <?=$city['status']===$s?'selected':''?>><?=$s?></option><?php endforeach; ?></select><button class="btn btn-primary">Save</button></form>
-                    </article>
-                <?php endwhile; ?>
-            </div>
-        </section>
-    </main>
+            <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
+
+            <!-- Forms Grid -->
+            <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 40px;">
+                <article class="profile-shard" style="padding: 24px;">
+                    <p class="eyebrow" style="color: var(--cyan-neon);">ADD CLINIC NODE</p>
+                    <h3 style="margin-top: 0; color: #FFF;">Register Clinic</h3>
+                    <form method="post" style="display: grid; gap: 14px;">
+                        <input type="hidden" name="action" value="add_clinic">
+                        <div class="field"><label>CLINIC NAME</label><input name="clinic_name" required placeholder="e.g. Care Nexus Central"></div>
+                        <div class="field">
+                            <label>CITY NODE</label>
+                            <select name="city_id" required>
+                                <option value="">Select City</option>
+                                <?php while($city = mysqli_fetch_assoc($cityOptions)): ?>
+                                    <option value="<?=$city['city_id']?>"><?=h($city['city_name'])?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="field"><label>ADDRESS</label><input name="address" required placeholder="Full street address"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="field"><label>PHONE</label><input name="phone" placeholder="0300-0000000"></div>
+                            <div class="field"><label>EMAIL</label><input type="email" name="email" placeholder="clinic@domain.com"></div>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register Clinic Node</span></button>
+                    </form>
+                </article>
+
+                <article class="profile-shard" style="padding: 24px;">
+                    <p class="eyebrow" style="color: var(--emerald-bio);">ADD SPECIALTY</p>
+                    <h3 style="margin-top: 0; color: #FFF;">Medical Specialization</h3>
+                    <form method="post" style="display: grid; gap: 14px;">
+                        <input type="hidden" name="action" value="add_specialization">
+                        <div class="field"><label>SPECIALTY NAME</label><input name="specialization_name" required placeholder="e.g. Cardiology"></div>
+                        <div class="field"><label>SHORT DESCRIPTION</label><textarea name="description" rows="2" required placeholder="Brief clinical scope"></textarea></div>
+                        <div class="field"><label>GUIDE OVERVIEW</label><textarea name="overview" rows="2" placeholder="In-depth specialty introduction"></textarea></div>
+                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register Specialty Shard</span></button>
+                    </form>
+                </article>
+
+                <article class="profile-shard" style="padding: 24px;">
+                    <p class="eyebrow" style="color: var(--violet-quantum);">ADD CITY NODE</p>
+                    <h3 style="margin-top: 0; color: #FFF;">City Network Node</h3>
+                    <form method="post" style="display: grid; gap: 14px;">
+                        <input type="hidden" name="action" value="add_city">
+                        <div class="field"><label>CITY NAME</label><input name="city_name" required placeholder="e.g. Multan"></div>
+                        <div class="field"><label>STATE / PROVINCE</label><input name="state" placeholder="e.g. Punjab"></div>
+                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register City Node</span></button>
+                    </form>
+                </article>
+            </section>
+
+            <!-- Tables Stack -->
+            <section style="display: grid; gap: 28px;">
+                <!-- Clinics Table -->
+                <article class="cyber-table-wrap">
+                    <p class="eyebrow">REGISTERED CLINIC NODES</p>
+                    <h3 style="margin:0 0 16px; color:#FFF;">Active Clinic Network</h3>
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>CLINIC NAME</th>
+                                <th>CITY NODE</th>
+                                <th>ATTACHED DOCTORS</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($c = mysqli_fetch_assoc($clinics)): ?>
+                                <tr>
+                                    <td style="font-family: var(--font-mono); color: var(--cyan-neon);">#<?=$c['clinic_id']?></td>
+                                    <td>
+                                        <strong style="color: #FFF;"><?=h($c['clinic_name'])?></strong><br>
+                                        <small style="color: var(--text-muted);"><?=h($c['address'])?></small>
+                                    </td>
+                                    <td><?=h($c['city_name'])?></td>
+                                    <td style="font-family: var(--font-mono);"><?=$c['doctors_count']?> Doctors</td>
+                                    <td><span class="status-pill status-<?=strtolower($c['status'])?>"><?=$c['status']?></span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            <form method="post" style="display: flex; gap: 6px;">
+                                                <input type="hidden" name="action" value="set_clinic_status">
+                                                <input type="hidden" name="clinic_id" value="<?=$c['clinic_id']?>">
+                                                <select name="status" style="padding: 4px 8px; font-size: 11px;">
+                                                    <?php foreach(['Active','Inactive'] as $s): ?><option <?=$c['status']===$s?'selected':''?>><?=$s?></option><?php endforeach; ?>
+                                                </select>
+                                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
+                                            </form>
+                                            <form method="post" onsubmit="return confirm('Remove clinic?');">
+                                                <input type="hidden" name="action" value="delete_clinic">
+                                                <input type="hidden" name="clinic_id" value="<?=$c['clinic_id']?>">
+                                                <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: var(--rose-danger); color: var(--rose-danger);">Remove</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </article>
+
+                <!-- Specializations Table -->
+                <article class="cyber-table-wrap">
+                    <p class="eyebrow">MEDICAL SPECIALIZATIONS</p>
+                    <h3 style="margin:0 0 16px; color:#FFF;">Specialty Archive</h3>
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>SPECIALTY NAME</th>
+                                <th>DESCRIPTION</th>
+                                <th>ATTACHED DOCTORS</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($s = mysqli_fetch_assoc($specializations)): ?>
+                                <tr>
+                                    <td><strong style="color: #FFF;"><?=h($s['specialization_name'])?></strong></td>
+                                    <td style="color: var(--text-muted); font-size: 13px; max-width: 300px;"><?=h($s['description'])?></td>
+                                    <td style="font-family: var(--font-mono); color: var(--cyan-neon);"><?=$s['doctors_count']?> Doctors</td>
+                                    <td><span class="status-pill status-<?=strtolower($s['status'])?>"><?=$s['status']?></span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 8px;">
+                                            <form method="post" style="display: flex; gap: 6px;">
+                                                <input type="hidden" name="action" value="set_specialization_status">
+                                                <input type="hidden" name="specialization_id" value="<?=$s['specialization_id']?>">
+                                                <select name="status" style="padding: 4px 8px; font-size: 11px;">
+                                                    <?php foreach(['Active','Inactive'] as $st): ?><option <?=$s['status']===$st?'selected':''?>><?=$st?></option><?php endforeach; ?>
+                                                </select>
+                                                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
+                                            </form>
+                                            <form method="post" onsubmit="return confirm('Remove specialization?');">
+                                                <input type="hidden" name="action" value="delete_specialization">
+                                                <input type="hidden" name="specialization_id" value="<?=$s['specialization_id']?>">
+                                                <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11px; border-color: var(--rose-danger); color: var(--rose-danger);">Remove</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </article>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

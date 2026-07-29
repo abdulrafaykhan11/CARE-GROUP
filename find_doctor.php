@@ -6,7 +6,7 @@ ensureDirectorySchema($conn);
 
 function shortText(?string $text, int $limit = 130): string
 {
-    $text = trim($text ?: 'Dedicated medical professional.');
+    $text = trim($text ?: 'Dedicated medical professional with verified clinical credentials.');
     return strlen($text) > $limit ? substr($text, 0, $limit - 3) . '...' : $text;
 }
 
@@ -20,7 +20,7 @@ $city = (int)($_GET['city'] ?? 0);
 $spec = (int)($_GET['spec'] ?? 0);
 $gender = $_GET['gender'] ?? '';
 $page = max(1, (int)($_GET['page'] ?? 1));
-$perPage = 5;
+$perPage = 6;
 $limit = $page * $perPage;
 
 $cities = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE status='Active' ORDER BY city_name");
@@ -85,120 +85,169 @@ $sections = deepSpecialtySections($guideName, $overview, $whenToBook, $carePoint
 
 $topWhere = $spec ? "WHERE d.specialization_id=$spec AND u.status='Active' AND d.verification_status='Verified'" : "WHERE u.status='Active' AND d.verification_status='Verified'";
 $topDoctors = mysqli_query($conn, "SELECT d.doctor_id,d.experience_years,d.consultation_fee,u.full_name,s.specialization_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN specializations s ON s.specialization_id=d.specialization_id $topWhere ORDER BY d.experience_years DESC LIMIT 5");
+
+$pageTitle = "Find Doctor & Profile Shards";
+include 'includes/header.php';
 ?>
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Find Doctor | Care Connect</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="index.php">care<span>connect</span></a>
-    <nav>
-      <a class="active" href="find_doctor.php">Find doctor</a>
-      <a href="index.php#doctors">Top doctors</a>
-      <?php if(!empty($_SESSION['user_id'])): ?>
-        <a href="<?=($_SESSION['role']==='Doctor'?'doctor/dashboard.php':(($_SESSION['role'] ?? '')==='Admin'?'admin/dashboard.php':'patient/dashboard.php'))?>">My dashboard</a>
-        <a class="btn btn-outline" href="logout.php">Sign out</a>
-      <?php else: ?>
-        <a href="login.php">Sign in</a>
-        <a class="btn btn-primary" href="register.php">Create account</a>
-      <?php endif; ?>
-    </nav>
-  </header>
 
-  <section class="find-hero">
-    <p class="eyebrow">FIND DOCTOR</p>
-    <h1>Choose the specialty you need.</h1>
-    <p>Doctors appear first. After the doctor list, scroll down for a deeper guide about the selected field, symptoms, care pathway, preparation, and FAQs.</p>
-  </section>
+<div class="directory" style="padding-top: 40px;">
+  <!-- Search Hero Header -->
+  <div style="text-align: center; max-width: 800px; margin: 0 auto 40px;">
+    <div class="eyebrow-badge">INTERACTIVE PATIENT DISCOVERY</div>
+    <h1 style="font-size: 42px; margin-bottom: 16px;">Holographic Doctor Search</h1>
+    <p style="color: var(--text-muted); font-size: 17px; line-height: 1.7;">
+      Filter by city network node, specialty field, or keyword. Select profiles below to view bio-metric telemetry and availability flux.
+    </p>
+  </div>
 
-  <form class="search-card find-search" method="get">
+  <!-- Holographic City Network Map Canvas -->
+  <div class="holographic-map-section">
+    <div class="holographic-map-header">
+      <div>
+        <p class="eyebrow">CYBER MAP RADAR</p>
+        <h3 style="font-size: 20px; margin: 0; color: #FFF;">Holographic City Network Grid</h3>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">
+        <?=$totalDoctors?> VERIFIED SHARDS ACTIVE
+      </div>
+    </div>
+    <canvas id="holographic-map-canvas"></canvas>
+  </div>
+
+  <!-- Cybernetic Filter Panel -->
+  <form class="search-card" method="get">
     <div class="filter-grid">
-      <div class="field"><label>Search by doctor or keyword</label><input name="search" value="<?=htmlspecialchars($search)?>" placeholder="e.g. migraine, Dr. Samia"></div>
-      <div class="field"><label>City</label><select name="city"><option value="">All cities</option><?php while($x=mysqli_fetch_assoc($cities)): ?><option value="<?=$x['city_id']?>" <?=$city===(int)$x['city_id']?'selected':''?>><?=htmlspecialchars($x['city_name'])?></option><?php endwhile; ?></select></div>
-      <div class="field"><label>Specialty</label><select name="spec"><option value="">All specialties</option><?php foreach($specs as $x): ?><option value="<?=$x['specialization_id']?>" <?=$spec===(int)$x['specialization_id']?'selected':''?>><?=htmlspecialchars($x['specialization_name'])?></option><?php endforeach; ?></select></div>
-      <div class="field"><label>Gender</label><select name="gender"><option value="">Any</option><?php foreach(['Male','Female','Other'] as $g): ?><option <?=$gender===$g?'selected':''?>><?=$g?></option><?php endforeach; ?></select></div>
-      <button class="btn btn-primary" type="submit">Search</button>
+      <div class="field">
+        <label>Search Doctor / Keyword</label>
+        <input name="search" value="<?=htmlspecialchars($search)?>" placeholder="e.g. Dr. Samia, Cardiology">
+      </div>
+      
+      <div class="field">
+        <label>City Node</label>
+        <select name="city">
+          <option value="">All Cities</option>
+          <?php while($x=mysqli_fetch_assoc($cities)): ?>
+            <option value="<?=$x['city_id']?>" <?=$city===(int)$x['city_id']?'selected':''?>><?=htmlspecialchars($x['city_name'])?></option>
+          <?php endwhile; ?>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Specialty Field</label>
+        <select name="spec">
+          <option value="">All Specialties</option>
+          <?php foreach($specs as $x): ?>
+            <option value="<?=$x['specialization_id']?>" <?=$spec===(int)$x['specialization_id']?'selected':''?>><?=htmlspecialchars($x['specialization_name'])?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Gender</label>
+        <select name="gender">
+          <option value="">Any Gender</option>
+          <?php foreach(['Male','Female','Other'] as $g): ?>
+            <option <?=$gender===$g?'selected':''?>><?=$g?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" type="submit">
+        <span>❖ Execute Search</span>
+      </button>
     </div>
   </form>
 
-  <main class="directory find-directory">
-    <section class="doctor-results-section">
-      <div class="section-heading">
-        <div><p class="eyebrow">VERIFIED DOCTORS</p><h2><?=htmlspecialchars($guideName)?></h2></div>
-        <span><?=$totalDoctors?> doctors found</span>
+  <!-- Doctor Results Shards Grid -->
+  <section class="doctor-results-section">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">VERIFIED DOCTOR SHARDS</p>
+        <h2><?=htmlspecialchars($guideName)?></h2>
       </div>
+      <span style="font-family: var(--font-mono); color: var(--cyan-neon); font-weight: 700; font-size: 14px;">
+        <?=$totalDoctors?> Specialists Found
+      </span>
+    </div>
 
-      <?php if(mysqli_num_rows($doctors)): ?>
-        <div class="doctor-grid">
-          <?php while($d=mysqli_fetch_assoc($doctors)):
-            $img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');
-          ?>
-            <article class="doctor-card">
-              <img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.style.display='none'" alt="">
-              <div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div>
-              <h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3>
-              <p><?=htmlspecialchars($d['qualification'])?> &middot; <?=htmlspecialchars($d['city_name'])?></p>
-              <p><?=htmlspecialchars(shortText($d['bio'] ?? ''))?></p>
-              <div class="doctor-meta"><span><?=intval($d['experience_years'])?> yrs experience</span><span>PKR <?=number_format($d['consultation_fee'])?></span></div>
-              <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>">View full profile</a>
-            </article>
-          <?php endwhile; ?>
-        </div>
-
-        <?php if($limit < $totalDoctors):
-          $next = $_GET;
-          $next['page'] = $page + 1;
+    <?php if(mysqli_num_rows($doctors)): ?>
+      <div class="doctor-grid">
+        <?php while($d=mysqli_fetch_assoc($doctors)):
+          $img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');
         ?>
-          <div class="load-more-wrap"><a class="btn btn-primary" href="find_doctor.php?<?=http_build_query($next)?>">Load more doctors</a><p class="note">Showing <?=min($limit, $totalDoctors)?> of <?=$totalDoctors?> doctors.</p></div>
-        <?php endif; ?>
-      <?php else: ?>
-        <div class="empty-state"><h3>No verified doctors found</h3><p>Try another specialty, city, or search term. New doctors appear here after admin verification.</p></div>
-      <?php endif; ?>
-    </section>
+          <article class="doctor-card profile-shard">
+            <div class="doctor-shard-header">
+              <img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.src='https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300'" alt="Dr. <?=htmlspecialchars($d['full_name'])?>">
+              <div class="doctor-info">
+                <div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div>
+                <h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3>
+                <div style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
+                  <?=htmlspecialchars($d['city_name'])?> &middot; <?=htmlspecialchars($d['qualification'])?>
+                </div>
+              </div>
+            </div>
 
-    <section class="specialty-deep-guide">
-      <div class="section-heading">
-        <div><p class="eyebrow">IN DEPTH GUIDE</p><h2>Understanding <?=htmlspecialchars($guideName)?></h2></div>
-      </div>
+            <p><?=htmlspecialchars(shortText($d['bio'] ?? ''))?></p>
 
-      <div class="guide-lead">
-        <p><?=htmlspecialchars($overview)?></p>
-      </div>
+            <div class="doctor-meta">
+              <span><?=intval($d['experience_years'])?> YRS EXP</span>
+              <span>PKR <?=number_format($d['consultation_fee'])?></span>
+            </div>
 
-      <div class="specialty-story-grid">
-        <?php foreach($sections as $title => $paragraphs): ?>
-          <article>
-            <h3><?=htmlspecialchars($title)?></h3>
-            <?php foreach($paragraphs as $paragraph): ?><p><?=htmlspecialchars($paragraph)?></p><?php endforeach; ?>
+            <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>" style="width:100%">
+              View Full Shard Profile
+            </a>
           </article>
-        <?php endforeach; ?>
+        <?php endwhile; ?>
       </div>
 
-      <section class="guide-top-doctors">
-        <div><p class="eyebrow">TOP VERIFIED DOCTORS</p><h2>Strong options in <?=htmlspecialchars($guideName)?></h2></div>
-        <div class="admin-simple-list">
-          <?php if(mysqli_num_rows($topDoctors)): ?>
-            <?php while($t=mysqli_fetch_assoc($topDoctors)): ?>
-              <a href="doctor_details.php?doctor_id=<?=$t['doctor_id']?>"><strong>Dr. <?=htmlspecialchars($t['full_name'])?></strong><span><?=htmlspecialchars($t['specialization_name'])?> &middot; <?=intval($t['experience_years'])?> yrs &middot; PKR <?=number_format($t['consultation_fee'])?></span></a>
-            <?php endwhile; ?>
-          <?php else: ?>
-            <div><strong>No verified top doctors yet</strong><span>Once admin verifies doctors in this field, they will appear here.</span></div>
-          <?php endif; ?>
+      <?php if($limit < $totalDoctors):
+        $next = $_GET;
+        $next['page'] = $page + 1;
+      ?>
+        <div style="text-align: center; margin-top: 40px;">
+          <a class="btn btn-primary" href="find_doctor.php?<?=http_build_query($next)?>">
+            Load More Doctor Shards
+          </a>
+          <p style="color: var(--text-dim); font-size: 13px; font-family: var(--font-mono); margin-top: 10px;">
+            Showing <?=min($limit, $totalDoctors)?> of <?=$totalDoctors?> specialists.
+          </p>
         </div>
-      </section>
+      <?php endif; ?>
+    <?php else: ?>
+      <div class="empty-state">
+        <h3>No verified doctor shards found</h3>
+        <p>Try modifying your city node, specialty filter, or search keywords.</p>
+      </div>
+    <?php endif; ?>
+  </section>
 
-      <section class="faq-list specialty-faqs">
-        <h3><?=htmlspecialchars($guideName)?> FAQs</h3>
-        <?php foreach($faqs as $faq): ?>
-          <details><summary><?=htmlspecialchars($faq['question'])?></summary><p><?=htmlspecialchars($faq['answer'])?></p></details>
-        <?php endforeach; ?>
-      </section>
-    </section>
-  </main>
-</body>
-</html>
+  <!-- Deep Specialty Archive Guide Shards -->
+  <section style="margin-top: 80px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 60px;">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">CLINICAL DATABASE ARCHIVE</p>
+        <h2>Understanding <?=htmlspecialchars($guideName)?></h2>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-lg); padding: 32px; margin-bottom: 30px; backdrop-filter: blur(20px);">
+      <p style="color: var(--text-muted); font-size: 18px; line-height: 1.8; margin: 0;">
+        <?=htmlspecialchars($overview)?>
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+      <?php foreach($sections as $title => $paragraphs): ?>
+        <article class="profile-shard" style="padding: 28px;">
+          <h3 style="font-size: 20px; color: var(--cyan-neon); margin-bottom: 14px;"><?=htmlspecialchars($title)?></h3>
+          <?php foreach($paragraphs as $paragraph): ?>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin-bottom: 10px;"><?=htmlspecialchars($paragraph)?></p>
+          <?php endforeach; ?>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  </section>
+</div>
+
+<?php include 'includes/footer.php'; ?>

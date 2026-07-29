@@ -45,102 +45,145 @@ $st = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total,SUM(status='
 $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name FROM appointments a JOIN patients p ON p.patient_id=a.patient_id JOIN users u ON u.user_id=p.user_id JOIN clinics c ON c.clinic_id=a.clinic_id WHERE a.doctor_id=$id ORDER BY a.appointment_date ASC,a.appointment_time ASC LIMIT 6");
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Doctor Dashboard | Care Connect</title>
+    <title>Doctor Command Center | CARE Nexus</title>
     <link rel="stylesheet" href="../assets/css/style.css">
-    <style>
-        .btn-sm { padding: 8px 12px; font-size: 11px; border-radius: 6px; }
-        .actions-col { display: flex; gap: 6px; flex-wrap: wrap; }
-    </style>
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
-<body class="app-body">
-    <aside class="sidebar">
-        <a class="brand" href="../index.php">care<span>connect</span></a>
-        <p class="side-label">DOCTOR PORTAL</p>
-        <a class="active" href="dashboard.php">Overview</a>
-        <a href="appointments.php">Appointments</a>
-        <a href="availability.php">Availability</a>
-        <a href="clinics.php">Clinics</a>
-        <a href="profile.php">Profile</a>
-        <a href="../logout.php">Sign out</a>
-    </aside>
-    <main class="dashboard-main">
-        <header class="dash-header">
-            <div>
-                <p class="eyebrow">PRACTICE OVERVIEW</p>
-                <h1>Hello, Dr. <?=htmlspecialchars(explode(' ', $doc['full_name'])[0])?>.</h1>
-            </div>
-            <a class="btn btn-primary" href="appointments.php">Manage appointments</a>
-        </header>
+<body>
+    <div class="dash-container">
+        <!-- Command Center Sidebar -->
+        <aside class="dash-sidebar">
+            <a class="brand" href="../index.php">
+                CARE <span>NEXUS</span>
+            </a>
+            <div class="eyebrow" style="color: var(--emerald-bio); margin-bottom: 24px;">DOCTOR COMMAND HUD</div>
+            
+            <nav class="dash-nav">
+                <a class="active" href="dashboard.php">❖ Overview HUD</a>
+                <a href="appointments.php">❖ Appointments Queue</a>
+                <a href="availability.php">❖ Availability Flux</a>
+                <a href="clinics.php">❖ Clinic Nodes</a>
+                <a href="profile.php">❖ Profile Shard</a>
+                <a href="../logout.php" style="margin-top: auto; color: var(--rose-danger);">❖ Sign Out</a>
+            </nav>
+        </aside>
 
-        <?=$msg?>
-
-        <section class="stats-grid">
-            <article><span>Awaiting action</span><strong><?=$st['pending'] ?? 0?></strong><small>Needs your decision</small></article>
-            <article><span>Confirmed</span><strong><?=$st['confirmed'] ?? 0?></strong><small>Upcoming consultations</small></article>
-            <article><span>Completed</span><strong><?=$st['completed'] ?? 0?></strong><small>Care delivered</small></article>
-            <article><span>No Shows</span><strong style="color: var(--danger);"><?=$st['noshow'] ?? 0?></strong><small>Missed appointments</small></article>
-        </section>
-
-        <section class="panel">
-            <div class="panel-head">
+        <!-- Command HUD Content -->
+        <main class="dash-content">
+            <header class="section-heading">
                 <div>
-                    <p class="eyebrow">SCHEDULE</p>
-                    <h2>Upcoming appointments</h2>
+                    <p class="eyebrow">DOCTOR COMMAND CENTER</p>
+                    <h2>Welcome, Dr. <?=htmlspecialchars(explode(' ', $doc['full_name'])[0])?></h2>
                 </div>
-                <a href="appointments.php">View all</a>
-            </div>
-            <?php if(mysqli_num_rows($apps)): ?>
-                <div class="appointment-list">
-                    <?php while($a = mysqli_fetch_assoc($apps)): ?>
-                        <article class="appointment-card" style="grid-template-columns: 60px 1.2fr 1.2fr auto;">
-                            <div class="date-block">
-                                <b><?=date('d', strtotime($a['appointment_date']))?></b>
-                                <span><?=date('M', strtotime($a['appointment_date']))?></span>
-                            </div>
-                            <div>
-                                <h3><?=htmlspecialchars($a['patient_name'])?></h3>
-                                <p><?=htmlspecialchars($a['clinic_name'])?></p>
-                                <?php if(!empty($a['reschedule_reason'])): ?>
-                                    <p class="change-note">Changed by <?=htmlspecialchars($a['rescheduled_by'])?>: <?=htmlspecialchars($a['reschedule_reason'])?></p>
-                                <?php endif; ?>
-                            </div>
-                            <div>
-                                <b><?=date('h:i A', strtotime($a['appointment_time']))?></b>
-                                <p><?=htmlspecialchars($a['reason'])?></p>
-                            </div>
-                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-                                <span class="status status-<?=$a['status']?>"><?=$a['status']?></span>
-                                <?php if(in_array($a['status'], ['Pending','Confirmed'], true)): ?>
-                                    <div style="display:flex; gap:6px; margin-bottom: 4px;">
-                                        <a href="../edit_appointment.php?id=<?=$a['appointment_id']?>" class="btn btn-outline btn-sm">Edit</a>
-                                    </div>
-                                    <form method="post" class="actions-col">
-                                        <input type="hidden" name="appointment_id" value="<?=$a['appointment_id']?>">
-                                        <?php if($a['status'] === 'Pending'): ?>
-                                            <button class="btn btn-primary btn-sm" name="status" value="Confirmed">Confirm</button>
-                                        <?php else: ?>
-                                            <button class="btn btn-primary btn-sm" name="status" value="Completed">Complete</button>
-                                            <button class="btn btn-outline btn-sm" name="status" value="NoShow" style="border-color:var(--danger); color:var(--danger);">No Show</button>
+                <a class="btn btn-primary" href="appointments.php">Full Appointments Queue</a>
+            </header>
+
+            <?=$msg?>
+
+            <!-- Bio-Metric Telemetry Stats HUD -->
+            <section class="hud-grid">
+                <article class="hud-metric">
+                    <label>AWAITING ACTION</label>
+                    <div class="value"><?=$st['pending'] ?? 0?></div>
+                    <span class="subtext">❖ Needs your confirmation</span>
+                </article>
+
+                <article class="hud-metric">
+                    <label>CONFIRMED VISITS</label>
+                    <div class="value"><?=$st['confirmed'] ?? 0?></div>
+                    <span class="subtext" style="color: var(--cyan-neon);">❖ Upcoming schedule</span>
+                </article>
+
+                <article class="hud-metric">
+                    <label>COMPLETED CARE</label>
+                    <div class="value" style="color: var(--emerald-bio);"><?=$st['completed'] ?? 0?></div>
+                    <span class="subtext" style="color: var(--emerald-bio);">❖ Successfully delivered</span>
+                </article>
+
+                <article class="hud-metric">
+                    <label>MISSED / NO-SHOW</label>
+                    <div class="value" style="color: var(--rose-danger);"><?=$st['noshow'] ?? 0?></div>
+                    <span class="subtext" style="color: var(--rose-danger);">❖ Patient missed visit</span>
+                </article>
+            </section>
+
+            <!-- Upcoming Appointments Queue Panel -->
+            <section class="cyber-table-wrap">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <p class="eyebrow">SCHEDULE QUEUE</p>
+                        <h3 style="margin: 0; font-size: 20px; color: #FFF;">Upcoming Patient Appointments</h3>
+                    </div>
+                    <a href="appointments.php" class="btn btn-outline">View All</a>
+                </div>
+
+                <?php if(mysqli_num_rows($apps)): ?>
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>DATE & TIME</th>
+                                <th>PATIENT NAME</th>
+                                <th>CLINIC NODE</th>
+                                <th>REASON</th>
+                                <th>STATUS</th>
+                                <th>COMMAND ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($a = mysqli_fetch_assoc($apps)): ?>
+                                <tr>
+                                    <td style="font-family: var(--font-mono); font-weight: 700; color: var(--cyan-neon);">
+                                        <?=date('d M Y', strtotime($a['appointment_date']))?><br>
+                                        <small style="color: var(--text-muted);"><?=date('h:i A', strtotime($a['appointment_time']))?></small>
+                                    </td>
+                                    <td>
+                                        <strong style="color: #FFF;"><?=htmlspecialchars($a['patient_name'])?></strong>
+                                        <?php if(!empty($a['reschedule_reason'])): ?>
+                                            <div style="color: var(--rose-danger); font-size: 11px; margin-top: 4px;">
+                                                Rescheduled: <?=htmlspecialchars($a['reschedule_reason'])?>
+                                            </div>
                                         <?php endif; ?>
-                                        <button class="btn btn-outline btn-sm" name="status" value="Cancelled">Cancel</button>
-                                    </form>
-                                <?php endif; ?>
-                            </div>
-                        </article>
-                    <?php endwhile; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">
-                    <h3>Your schedule is clear</h3>
-                    <p>Add your availability so patients can request a suitable time.</p>
-                    <a class="btn btn-primary" href="availability.php">Set availability</a>
-                </div>
-            <?php endif; ?>
-        </section>
-    </main>
+                                    </td>
+                                    <td style="color: var(--text-muted);"><?=htmlspecialchars($a['clinic_name'])?></td>
+                                    <td><?=htmlspecialchars($a['reason'])?></td>
+                                    <td>
+                                        <span class="status-pill status-<?=strtolower($a['status'])?>">
+                                            <?=$a['status']?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <?php if(in_array($a['status'], ['Pending','Confirmed'], true)): ?>
+                                            <form method="post" style="display: flex; gap: 8px;">
+                                                <input type="hidden" name="appointment_id" value="<?=$a['appointment_id']?>">
+                                                <?php if($a['status'] === 'Pending'): ?>
+                                                    <button class="btn btn-primary" style="padding: 6px 14px; font-size: 11px;" name="status" value="Confirmed">Confirm</button>
+                                                <?php else: ?>
+                                                    <button class="btn btn-primary" style="padding: 6px 14px; font-size: 11px;" name="status" value="Completed">Complete</button>
+                                                    <button class="btn btn-outline" style="padding: 6px 14px; font-size: 11px; border-color: var(--rose-danger); color: var(--rose-danger);" name="status" value="NoShow">No Show</button>
+                                                <?php endif; ?>
+                                                <button class="btn btn-outline" style="padding: 6px 14px; font-size: 11px;" name="status" value="Cancelled">Cancel</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);">No Actions</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <h3>Your schedule queue is currently clear</h3>
+                        <p>Configure availability flux so patients can book visits.</p>
+                        <a class="btn btn-primary" href="availability.php" style="margin-top: 15px;">Configure Availability Flux</a>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </main>
+    </div>
 </body>
 </html>

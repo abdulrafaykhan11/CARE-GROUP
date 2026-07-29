@@ -35,53 +35,65 @@ if (isset($_POST["register"])) {
                 exit();
             }
         } else {
-            $error = "Error: username already exists or phone number already exists";
+            $error = "Registration error: Username or phone number already registered.";
         }
     } else {
-        $error = "Please fill all fields correctly.";
+        $error = "Please complete all mandatory data fields correctly.";
     }
 }
+
+$pageTitle = "Create Cybernetic Account";
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Care Connect</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="auth-page">
+
+<div class="auth-page">
     <main class="auth-card">
-        <a class="brand" href="index.php">care<span>connect</span></a>
-        <h1>Create Account</h1>
+        <div class="eyebrow-badge">MANDATORY DATA ENFORCEMENT</div>
+        <h1>Create Cybernetic Account</h1>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Enter your verified information to join the CARE Group Clinical Nexus.
+        </p>
+
         <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
-        <form action="" method="post">
+
+        <form action="" method="post" style="display: grid; gap: 18px;">
             <div class="field">
-                <label>FULLNAME</label>
-                <input type="text" name="full_name" required>
+                <label>FULL NAME <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="text" name="full_name" required placeholder="e.g. Dr. Samia Khan / Ali Raza">
             </div>
+
             <div class="field">
-                <label>EMAIL</label>
-                <input type="email" name="email" required>
+                <label>EMAIL ADDRESS <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="email" name="email" required placeholder="name@domain.com">
             </div>
+
             <div class="field">
-                <label>PHONE</label>
+                <label>PHONE NUMBER <span style="color: var(--cyan-neon);">*</span></label>
                 <input type="tel" name="phone" required placeholder="e.g. 0300-1234567">
             </div>
+
             <div class="field">
-                <label>PASSWORD</label>
-                <input type="password" name="password" minlength="8" required>
+                <label>ENCRYPTED PASSWORD <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="password" name="password" minlength="8" required placeholder="Min 8 characters">
             </div>
+
             <div class="field">
-                <label>ROLE</label>
+                <label>PORTAL ROLE <span style="color: var(--cyan-neon);">*</span></label>
                 <select name="role" required>
-                    <option value="Patient">Patient</option>
-                    <option value="Doctor">Doctor</option>
+                    <option value="Patient">Patient Discovery</option>
+                    <option value="Doctor">Doctor Practitioner</option>
                 </select>
             </div>
-            <button class="btn btn-primary" type="submit" name="register">Register Now</button>
+
+            <button class="btn btn-primary" type="submit" name="register" style="width: 100%; margin-top: 10px;">
+                <span>❖ Register Account & Proceed</span>
+            </button>
         </form>
-        <p class="note">Already have an account? <a href="login.php" style="color:var(--teal);font-weight:700">Sign in</a></p>
+
+        <p style="color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 24px;">
+            Already have an active account? <a href="login.php" style="color: var(--cyan-neon); font-weight: 700;">Sign in here</a>
+        </p>
     </main>
-</body>
-</html>
+</div>
+
+<?php include 'includes/footer.php'; ?>

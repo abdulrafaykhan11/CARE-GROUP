@@ -3,81 +3,174 @@ require_once 'config/db.php';
 
 function excerptText(?string $text, int $limit = 110): string
 {
-    $text = trim($text ?: 'Dedicated medical professional.');
+    $text = trim($text ?: 'Dedicated medical professional with verified clinical credentials.');
     return strlen($text) > $limit ? substr($text, 0, $limit - 3) . '...' : $text;
 }
 
+// Fetch Top Verified Doctors
 $doctors = mysqli_query($conn, "SELECT d.*,u.full_name,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN cities c ON c.city_id=d.city_id JOIN specializations s ON s.specialization_id=d.specialization_id WHERE u.status='Active' AND d.verification_status='Verified' ORDER BY d.experience_years DESC,d.created_at DESC LIMIT 6");
+
+// Telemetry Stats Counts
+$docCountRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM doctors d JOIN users u ON u.user_id=d.user_id WHERE u.status='Active' AND d.verification_status='Verified'"));
+$totalVerifiedDocs = (int)($docCountRow['c'] ?? 14);
+
+$patientCountRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM patients"));
+$totalPatients = (int)($patientCountRow['c'] ?? 120);
+
+$cityCountRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM cities WHERE status='Active'"));
+$totalCities = (int)($cityCountRow['c'] ?? 8);
+
+$aptCountRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM appointments"));
+$totalAppts = (int)($aptCountRow['c'] ?? 450);
+
+$pageTitle = "Cinematic Landing Page";
+include 'includes/header.php';
 ?>
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Care Connect | Trusted doctors</title>
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="index.php">care<span>connect</span></a>
-    <nav>
-      <a href="find_doctor.php">Find doctor</a>
-      <a href="#doctors">Top doctors</a>
-      <?php if(!empty($_SESSION['user_id'])): ?>
-        <a href="<?=($_SESSION['role']==='Doctor'?'doctor/dashboard.php':(($_SESSION['role'] ?? '')==='Admin'?'admin/dashboard.php':'patient/dashboard.php'))?>">My dashboard</a>
-        <a class="btn btn-outline" href="logout.php">Sign out</a>
-      <?php else: ?>
-        <a href="login.php">Sign in</a>
-        <a class="btn btn-primary" href="register.php">Create account</a>
-      <?php endif; ?>
-    </nav>
-  </header>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <p class="eyebrow">ELEVATED CARE</p>
-      <h1>The right doctor is <span>closer</span> than you think.</h1>
-      <p class="hero-copy">Start with our featured doctors, or search by specialty to find the exact care you need.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="find_doctor.php">Find doctor by specialty</a>
+<!-- 3D WebGL Neural Background Hero Section -->
+<section class="hero cyber-hero">
+  <div id="hero-canvas-3d"></div>
+  
+  <div class="hero-inner">
+    <div class="eyebrow-badge">CYBERNETIC CLINICAL NEXUS</div>
+    <h1>Reimagining Healthcare as a <span>High-Tech Cinematic</span> Journey</h1>
+    <p class="hero-copy">
+      Discover top verified medical specialists, explore availability flux schedules, and navigate healthcare through our holographic city network portal.
+    </p>
+    
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="find_doctor.php">
+        <span>❖ Launch Doctor Discovery</span>
+      </a>
+      <a class="btn btn-outline" href="#hologram-network">
+        <span>View Holographic Map</span>
+      </a>
+    </div>
+
+    <!-- Live Telemetry HUD Bar -->
+    <div class="telemetry-bar">
+      <div class="telemetry-item">
+        <span class="telemetry-number" data-counter="<?=$totalVerifiedDocs?>">0</span>
+        <span class="telemetry-label">Verified Doctors</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-number" data-counter="<?=$totalCities?>">0</span>
+        <span class="telemetry-label">City Nodes</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-number" data-counter="<?=$totalPatients?>">0</span>
+        <span class="telemetry-label">Registered Patients</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-number" data-counter="<?=$totalAppts?>">0</span>
+        <span class="telemetry-label">Successful Visits</span>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <main id="doctors" class="directory">
-    <div class="section-heading">
+<!-- Holographic City Map Section -->
+<section id="hologram-network" class="directory">
+  <div class="holographic-map-section">
+    <div class="holographic-map-header">
       <div>
-        <p class="eyebrow">FEATURED DOCTORS</p>
-        <h2>Top doctors to start with</h2>
+        <p class="eyebrow">INTERACTIVE NETWORK MATRIX</p>
+        <h2>Holographic City Node Map</h2>
       </div>
-      <a class="btn btn-outline" href="find_doctor.php">View all doctors</a>
+      <a href="find_doctor.php" class="btn btn-outline">Search All Nodes</a>
     </div>
+    <canvas id="holographic-map-canvas"></canvas>
+    <p style="color: var(--text-dim); font-size: 12px; font-family: var(--font-mono); text-align: center; margin-top: 14px;">
+      Interactive WebGL Radar: Click any city node on the grid to filter verified doctors in that metropolitan network.
+    </p>
+  </div>
+</section>
 
-    <?php if(mysqli_num_rows($doctors)): ?>
-      <div class="doctor-grid">
-        <?php while($d=mysqli_fetch_assoc($doctors)):
-          $img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');
-        ?>
-          <article class="doctor-card">
-            <img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.style.display='none'" alt="">
-            <div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div>
-            <h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3>
-            <p><?=htmlspecialchars($d['qualification'])?> &middot; <?=htmlspecialchars($d['city_name'])?></p>
-            <p><?=htmlspecialchars(excerptText($d['bio'] ?? ''))?></p>
-            <div class="doctor-meta">
-              <span><?=intval($d['experience_years'])?> yrs experience</span>
-              <span>PKR <?=number_format($d['consultation_fee'])?></span>
+<!-- Profile Shards Showcase Section -->
+<main id="doctors" class="directory">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">FEATURED CLINICAL PROFILE SHARDS</p>
+      <h2>Top Verified Doctors</h2>
+    </div>
+    <a class="btn btn-outline" href="find_doctor.php">Explore All Specialists</a>
+  </div>
+
+  <?php if(mysqli_num_rows($doctors)): ?>
+    <div class="doctor-grid">
+      <?php while($d=mysqli_fetch_assoc($doctors)):
+        $img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');
+      ?>
+        <article class="doctor-card profile-shard">
+          <div class="doctor-shard-header">
+            <img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.src='https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300'" alt="Dr. <?=htmlspecialchars($d['full_name'])?>">
+            <div class="doctor-info">
+              <div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div>
+              <h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3>
+              <div style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
+                <?=htmlspecialchars($d['city_name'])?> &middot; <?=htmlspecialchars($d['qualification'])?>
+              </div>
             </div>
-            <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>">View & book</a>
-          </article>
-        <?php endwhile; ?>
-      </div>
-    <?php else: ?>
-      <div class="empty-state">
-        <h3>No doctors available yet</h3>
-        <p>Add doctors from the registration flow, then they will appear here.</p>
-      </div>
-    <?php endif; ?>
-  </main>
-</body>
-</html>
+          </div>
+
+          <p><?=htmlspecialchars(excerptText($d['bio'] ?? ''))?></p>
+
+          <div class="doctor-meta">
+            <span><?=intval($d['experience_years'])?> YRS EXP</span>
+            <span>PKR <?=number_format($d['consultation_fee'])?></span>
+          </div>
+
+          <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>" style="width:100%">
+            View Shard Profile & Book
+          </a>
+        </article>
+      <?php endwhile; ?>
+    </div>
+  <?php else: ?>
+    <div class="empty-state">
+      <h3>No verified doctor shards active</h3>
+      <p>Register as a doctor or login as admin to verify practitioner profiles.</p>
+    </div>
+  <?php endif; ?>
+</main>
+
+<!-- Cybernetic Clinical Features Grid -->
+<section class="directory" style="padding-top: 20px;">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">PLATFORM ARCHITECTURE</p>
+      <h2>Role-Based Cybernetic Interfaces</h2>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px;">
+    <article class="profile-shard" style="padding: 32px;">
+      <div class="eyebrow" style="color: var(--cyan-neon);">PATIENT DISCOVERY</div>
+      <h3 style="font-size: 22px; margin: 10px 0;">Profile Shards & Search</h3>
+      <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
+        Navigate specialists with biometric profile shards, city node filtering, and disease database guides.
+      </p>
+      <a class="btn btn-outline" href="find_doctor.php" style="margin-top: 15px;">Access Discovery</a>
+    </article>
+
+    <article class="profile-shard" style="padding: 32px;">
+      <div class="eyebrow" style="color: var(--emerald-bio);">DOCTOR COMMAND</div>
+      <h3 style="font-size: 22px; margin: 10px 0;">Availability Flux HUD</h3>
+      <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
+        Data-rich practitioner dashboard for timing flux management, slot configuration, and patient HUD queue.
+      </p>
+      <a class="btn btn-outline" href="register.php" style="margin-top: 15px;">Doctor Login / Register</a>
+    </article>
+
+    <article class="profile-shard" style="padding: 32px;">
+      <div class="eyebrow" style="color: var(--violet-quantum);">ADMIN NEXUS</div>
+      <h3 style="font-size: 22px; margin: 10px 0;">Centralized Oversight</h3>
+      <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
+        Neon data visualizations, system health telemetry rings, verification queues, and city node controls.
+      </p>
+      <a class="btn btn-outline" href="admin/dashboard.php" style="margin-top: 15px;">Admin Oversight</a>
+    </article>
+  </div>
+</section>
+
+<?php include 'includes/footer.php'; ?>

@@ -90,88 +90,87 @@ if (isset($_POST["register_doctor"])) {
                 deleteUploadedProfileFile($newimage, 'doctor');
                 deleteUploadedAssetFile($targetlicense);
                 deleteUploadedAssetFile($targetdegree);
-                $error = "Error in uploading files. Please try again.";
+                $error = "Error uploading document certificates. Please try again.";
             }
 
         } else {
-            $error = "Error: Degree and License files must be in PDF, JPG, JPEG, or PNG format.";
+            $error = "Degree and License certificates must be PDF, JPG, JPEG, or PNG files.";
         }
 
     } else {
-        $error = "Error: make sure all fields are filled correctly and files are uploaded.";
+        $error = "Error: Ensure all required fields, CNIC format, PMDC format, and document certificates are provided.";
     }
 }
+
+$pageTitle = "Doctor Practitioner Setup";
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Registration | Care Connect</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="auth-page">
-    <main class="auth-card" style="width: min(700px, 100%);">
-        <a class="brand" href="index.php">care<span>connect</span></a>
-        <h1>Doctor Profile Registration</h1>
+
+<div class="auth-page">
+    <main class="auth-card" style="width: min(780px, 100%);">
+        <div class="eyebrow-badge">DOCTOR COMMAND CENTER SETUP</div>
+        <h1>Practitioner Credentials Telemetry</h1>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Provide your PMDC credentials, medical degree certificates, and consultation fee for Admin Nexus verification.
+        </p>
         
         <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
 
-        <form action="" method="post" enctype="multipart/form-data">
-            <div class="form-row">
+        <form action="" method="post" enctype="multipart/form-data" style="display: grid; gap: 18px;">
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 18px;">
                 <div class="field">
-                    <label>FULL ADDRESS</label>
-                    <input type="text" name="full_address" required>
+                    <label>CLINICAL / RESIDENTIAL ADDRESS <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="text" name="full_address" required placeholder="Full street address">
                 </div>
                 <div class="field">
-                    <label>EXPERIENCE YEARS</label>
-                    <input type="number" name="experience" min="0" required>
+                    <label>EXPERIENCE (YRS) <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="number" name="experience" min="0" required placeholder="5">
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>QUALIFICATION</label>
-                    <input type="text" name="qualification" placeholder="MBBS, FCPS" required>
+                    <label>QUALIFICATION <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="text" name="qualification" placeholder="e.g. MBBS, FCPS" required>
                 </div>
                 <div class="field">
-                    <label>PMDC REGISTRATION NUMBER</label>
+                    <label>PMDC REGISTRATION # <span style="color: var(--cyan-neon);">*</span></label>
                     <input type="text" name="pmdc" placeholder="12345-P / 98765-D" required>
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>CNIC NUMBER</label>
+                    <label>CNIC NUMBER <span style="color: var(--cyan-neon);">*</span></label>
                     <input type="text" name="cnic" placeholder="42101-1234567-1" required>
                 </div>
                 <div class="field">
-                    <label>CONSULTATION FEE (PKR)</label>
-                    <input type="number" name="fee" min="0" max="50000" required>
+                    <label>CONSULTATION FEE (PKR) <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="number" name="fee" min="0" max="50000" required placeholder="2000">
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>LICENSE CERTIFICATE</label>
-                    <input type="file" name="license" accept=".pdf,.jpg,.jpeg,.png" required style="border:none; padding:0; padding-top:10px;">
+                    <label>LICENSE CERTIFICATE <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="file" name="license" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
                 <div class="field">
-                    <label>DEGREE CERTIFICATE</label>
-                    <input type="file" name="degree" accept=".pdf,.jpg,.jpeg,.png" required style="border:none; padding:0; padding-top:10px;">
+                    <label>DEGREE CERTIFICATE <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="file" name="degree" accept=".pdf,.jpg,.jpeg,.png" required>
                 </div>
             </div>
 
             <div class="field">
-                <label>PROFILE IMAGE</label>
-                <input type="file" name="img" accept="image/*" required style="border:none; padding:0; padding-top:10px;">
+                <label>PROFILE SHARD PHOTO <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="file" name="img" accept="image/*" required>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>SPECIALIZATION</label>
+                    <label>SPECIALIZATION FIELD <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="specialization_id" required>
-                        <option value="">SELECT</option>
+                        <option value="">Select Specialty</option>
                         <?php
                         $spec_query = "SELECT specialization_id, specialization_name FROM specializations";
                         $spec_result = mysqli_query($conn, $spec_query);
@@ -182,7 +181,7 @@ if (isset($_POST["register_doctor"])) {
                     </select>
                 </div>
                 <div class="field">
-                    <label>CITY</label>
+                    <label>CITY NODE <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="city_id" required>
                         <option value="">Select City</option>
                         <?php
@@ -196,9 +195,9 @@ if (isset($_POST["register_doctor"])) {
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>GENDER</label>
+                    <label>GENDER <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="gender" required>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -206,18 +205,21 @@ if (isset($_POST["register_doctor"])) {
                     </select>
                 </div>
                 <div class="field">
-                    <label>DATE OF BIRTH</label>
+                    <label>DATE OF BIRTH <span style="color: var(--cyan-neon);">*</span></label>
                     <input type="date" name="dob" required>
                 </div>
             </div>
 
             <div class="field">
-                <label>BIO</label>
-                <textarea name="bio" rows="4" style="width:100%; border:0; border-bottom:2px solid var(--line); font-family:inherit; padding:10px 0; background:transparent;" required></textarea>
+                <label>PROFESSIONAL BIO <span style="color: var(--cyan-neon);">*</span></label>
+                <textarea name="bio" rows="4" placeholder="Detail your clinical background, experience, and patient care philosophy..." required></textarea>
             </div>
             
-            <button class="btn btn-primary" type="submit" name="register_doctor" style="width:100%; margin-top:20px;">Complete Registration</button>
+            <button class="btn btn-primary" type="submit" name="register_doctor" style="width:100%; margin-top:10px;">
+                <span>❖ Submit Credentials For Verification</span>
+            </button>
         </form>
     </main>
-</body>
-</html>
+</div>
+
+<?php include 'includes/footer.php'; ?>

@@ -20,7 +20,7 @@ if (!$patient) {
 }
 if (!$doctor) {
   http_response_code(404);
-  exit('Doctor not found.');
+  exit('Doctor shard profile not found.');
 }
 
 $availability = [];
@@ -58,15 +58,15 @@ if (isset($_POST['book'])) {
   }
 
   if (!$valid || !preg_match('/^\d{2}:\d{2}:\d{2}$/', $time)) {
-    $msg = '<div class="alert alert-error">Please choose an available date and time slot.</div>';
+    $msg = '<div class="alert alert-error">Please choose an active availability flux slot.</div>';
   } elseif ($reason === '') {
-    $msg = '<div class="alert alert-error">Please add a reason for your visit.</div>';
+    $msg = '<div class="alert alert-error">Please select or enter your visit reason.</div>';
   } else {
     $safeDate = mysqli_real_escape_string($conn, $date);
     $safeTime = mysqli_real_escape_string($conn, $time);
     $exists = mysqli_query($conn, "SELECT appointment_id FROM appointments WHERE doctor_id=$doctorId AND appointment_date='$safeDate' AND appointment_time='$safeTime' AND status NOT IN ('Cancelled','NoShow')");
     if (mysqli_num_rows($exists)) {
-      $msg = '<div class="alert alert-error">This slot was just booked. Please choose another time.</div>';
+      $msg = '<div class="alert alert-error">This slot was just booked by another patient. Choose another time slot.</div>';
     } else {
       $stmt = mysqli_prepare($conn, 'INSERT INTO appointments (doctor_id,patient_id,clinic_id,appointment_date,appointment_time,reason,notes) VALUES (?,?,?,?,?,?,?)');
       mysqli_stmt_bind_param($stmt, 'iiissss', $doctorId, $patient['patient_id'], $clinic, $date, $time, $reason, $notes);
@@ -81,9 +81,9 @@ if (isset($_POST['book'])) {
         }
         $pemail = mysqli_fetch_assoc(mysqli_query($conn, "SELECT email FROM users WHERE user_id=$uid"))['email'];
         $mailOk = sendAppointmentEmail(['patient_email' => $pemail, 'patient_name' => $_SESSION['full_name'], 'doctor_email' => $doctor['email'], 'doctor_name' => $doctor['full_name'], 'date' => date('d M Y', strtotime($date)), 'time' => date('h:i A', strtotime($time)), 'clinic' => $clinicName]);
-        $msg = '<div class="alert alert-success">Appointment request sent successfully.' . ($mailOk ? ' Confirmation email sent.' : '') . '</div>';
+        $msg = '<div class="alert alert-success">Appointment request transmitted successfully.' . ($mailOk ? ' Confirmation email dispatched.' : '') . '</div>';
       } else {
-        $msg = '<div class="alert alert-error">Could not save your request.</div>';
+        $msg = '<div class="alert alert-error">Transmission failed. Could not register appointment.</div>';
       }
     }
   }
@@ -92,152 +92,177 @@ if (isset($_POST['book'])) {
 $img = 'assets/uploads/doctor/profile/' . basename($doctor['profile_image'] ?? '');
 $profileSections = doctorLongProfileSections($doctor, $clinicNames, $availability);
 $profileFaqs = doctorFaqs($doctor);
-?><!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Book Dr. <?= htmlspecialchars($doctor['full_name']) ?></title>
-  <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="index.php">care<span>connect</span></a>
-    <nav>
-      <a href="patient/dashboard.php">My dashboard</a>
-      <a class="btn btn-outline" href="find_doctor.php">Back to doctors</a>
-    </nav>
-  </header>
 
-  <main class="doctor-profile-page">
-    <section class="doctor-profile-hero">
-      <div class="doctor-profile-photo">
-        <img src="<?= htmlspecialchars($img) ?>" onerror="this.style.display='none'" alt="">
+$pageTitle = 'Dr. ' . $doctor['full_name'] . ' Profile Shard';
+include 'includes/header.php';
+?>
+
+<main class="doctor-profile-page">
+  <!-- Doctor Hero Banner -->
+  <section class="doctor-profile-hero">
+    <div class="doctor-profile-photo">
+      <img src="<?= htmlspecialchars($img) ?>" onerror="this.src='https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300'" alt="Dr. <?= htmlspecialchars($doctor['full_name']) ?>">
+    </div>
+    
+    <div class="doctor-profile-intro">
+      <div class="eyebrow" style="color: var(--cyan-neon);"><?= htmlspecialchars($doctor['specialization_name']) ?></div>
+      <h1 style="font-size: 36px; margin: 6px 0;">Dr. <?= htmlspecialchars($doctor['full_name']) ?></h1>
+      <p style="color: var(--text-muted); font-size: 16px; margin: 0 0 16px;">
+        <?= htmlspecialchars($doctor['qualification']) ?> &middot; <?= intval($doctor['experience_years']) ?> Years Experience &middot; <?= htmlspecialchars($doctor['city_name']) ?> Node
+      </p>
+      
+      <div class="doctor-profile-metrics">
+        <article>
+          <span>CONSULTATION FEE</span>
+          <strong>PKR <?= number_format($doctor['consultation_fee']) ?></strong>
+        </article>
+        <article>
+          <span>VERIFICATION SEAL</span>
+          <strong style="color: var(--emerald-bio);">VERIFIED ❖</strong>
+        </article>
+        <article>
+          <span>CLINIC NODES</span>
+          <strong><?= count($clinicNames) ?></strong>
+        </article>
       </div>
-      <div class="doctor-profile-intro">
-        <p class="eyebrow"><?= htmlspecialchars($doctor['specialization_name']) ?></p>
-        <h1>Dr. <?= htmlspecialchars($doctor['full_name']) ?></h1>
-        <p><?= htmlspecialchars($doctor['qualification']) ?> &middot; <?= intval($doctor['experience_years']) ?> years experience &middot; <?= htmlspecialchars($doctor['city_name']) ?></p>
-        <div class="doctor-profile-metrics">
-          <article><span>Fee</span><strong>PKR <?= number_format($doctor['consultation_fee']) ?></strong></article>
-          <article><span>Status</span><strong>Verified</strong></article>
-          <article><span>Clinics</span><strong><?= count($clinicNames) ?></strong></article>
-        </div>
-      </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="doctor-profile-layout">
-      <div class="doctor-content-sections">
+  <!-- Layout: Story Panels & Cyber Booking HUD -->
+  <section class="doctor-profile-layout">
+    <div class="doctor-content-sections">
+      <section class="doctor-story-panel">
+        <p class="eyebrow">BIO-METRIC SUMMARY</p>
+        <h2 style="font-size: 24px; margin-bottom: 14px;">About Dr. <?= htmlspecialchars($doctor['full_name']) ?></h2>
+        <p style="color: var(--text-muted); font-size: 15px; line-height: 1.8;">
+          <?= htmlspecialchars(trim($doctor['bio'] ?? '') ?: 'This verified practitioner profile gives patients transparent telemetry regarding experience, qualifications, clinic timings, and direct appointment booking.') ?>
+        </p>
+      </section>
+
+      <?php foreach ($profileSections as $title => $paragraphs): ?>
         <section class="doctor-story-panel">
-          <p class="eyebrow">PROFILE OVERVIEW</p>
-          <h2>About Dr. <?= htmlspecialchars($doctor['full_name']) ?></h2>
-          <p><?= htmlspecialchars(trim($doctor['bio'] ?? '') ?: 'This verified doctor profile gives patients a clearer view of qualification, experience, clinic timing, fee, and booking expectations before they request an appointment.') ?></p>
-        </section>
-
-        <?php foreach ($profileSections as $title => $paragraphs): ?>
-          <section class="doctor-story-panel">
-            <h2><?= htmlspecialchars($title) ?></h2>
-            <?php foreach ($paragraphs as $paragraph): ?>
-              <p><?= htmlspecialchars($paragraph) ?></p>
-            <?php endforeach; ?>
-          </section>
-        <?php endforeach; ?>
-
-        <section class="doctor-story-panel">
-          <div class="section-heading compact-heading">
-            <div><p class="eyebrow">CLINICS & TIMINGS</p><h2>Where this doctor is available</h2></div>
-          </div>
-          <div class="doctor-schedule-grid">
-            <?php if ($availability): ?>
-              <?php foreach ($availability as $a): ?>
-                <article>
-                  <strong><?= htmlspecialchars($a['clinic_name']) ?></strong>
-                  <span><?= htmlspecialchars($a['day']) ?></span>
-                  <small><?= date('h:i A', strtotime($a['start_time'])) ?> - <?= date('h:i A', strtotime($a['end_time'])) ?> &middot; <?= intval($a['slot_duration']) ?> min slots</small>
-                </article>
-              <?php endforeach; ?>
-            <?php else: ?>
-              <article><strong>No active schedule yet</strong><span>Check again later or choose another verified doctor.</span></article>
-            <?php endif; ?>
-          </div>
-        </section>
-
-        <section class="doctor-story-panel doctor-faqs">
-          <p class="eyebrow">PATIENT QUESTIONS</p>
-          <h2>FAQs about this profile</h2>
-          <?php foreach ($profileFaqs as $question => $answer): ?>
-            <details><summary><?= htmlspecialchars($question) ?></summary><p><?= htmlspecialchars($answer) ?></p></details>
+          <h2 style="font-size: 22px; color: var(--cyan-neon); margin-bottom: 14px;"><?= htmlspecialchars($title) ?></h2>
+          <?php foreach ($paragraphs as $paragraph): ?>
+            <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin-bottom: 10px;"><?= htmlspecialchars($paragraph) ?></p>
           <?php endforeach; ?>
         </section>
-      </div>
+      <?php endforeach; ?>
 
-      <aside class="doctor-booking-panel">
-        <section class="booking-form">
-          <p class="eyebrow">REQUEST A VISIT</p>
-          <h2>Choose a convenient time</h2><?= $msg ?>
-          <form method="post">
-            <div class="field"><label>CLINIC</label><select name="clinic_id" id="clinic" required>
-                <option value="">Choose clinic</option><?php foreach ($availability as $a): ?>
-                  <option value="<?= $a['clinic_id'] ?>"><?= htmlspecialchars($a['clinic_name']) ?> &middot; <?= $a['day'] ?> (<?= date('h:i A', strtotime($a['start_time'])) ?>-<?= date('h:i A', strtotime($a['end_time'])) ?>)</option>
-                <?php endforeach; ?>
-              </select></div>
-            <div class="form-row">
-              <div class="field"><label>DATE</label><input id="date" type="date" name="date" min="<?= date('Y-m-d') ?>" required></div>
-              <div class="field"><label>AVAILABLE TIME</label><select id="time" name="time" required><option value="">Choose a clinic and date</option></select></div>
-            </div>
-            <p class="note" id="scheduleHint" style="margin-bottom: 25px;">Choose a clinic and date to see slots.</p>
-            <div class="field"><label>REASON FOR VISIT</label><select name="reason_dropdown" id="reasonDropdown" required>
-                <option value="">Select a reason</option>
-                <option>General Checkup</option>
-                <option>Fever / Cold</option>
-                <option>Skin Issues</option>
-                <option>Orthopedic Pain</option>
-                <option>Headache / Migraine</option>
-                <option>Heart / Blood Pressure</option>
-                <option>Pregnancy / Gynecology</option>
-                <option>Follow-up</option>
-                <option value="Other">Other</option>
-              </select><input name="reason" id="otherReason" maxlength="200" style="display:none;margin-top:10px" placeholder="Please specify your reason" disabled></div>
-            <div class="field"><label>NOTES (OPTIONAL)</label><textarea name="notes" rows="3" maxlength="1000"></textarea></div>
-            <button class="btn btn-primary" name="book" style="width:100%">Request appointment</button>
-          </form>
-        </section>
-      </aside>
-    </section>
-  </main>
+      <!-- Availability Flux Schedule Timings -->
+      <section class="doctor-story-panel">
+        <p class="eyebrow">AVAILABILITY FLUX TIMELINE</p>
+        <h2 style="font-size: 22px; margin-bottom: 18px;">Active Schedule Slots</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+          <?php if ($availability): ?>
+            <?php foreach ($availability as $a): ?>
+              <div style="background: rgba(4, 8, 20, 0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px;">
+                <strong style="color: #FFF; font-size: 15px; display: block;"><?= htmlspecialchars($a['clinic_name']) ?></strong>
+                <span style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon); font-weight: 700; text-transform: uppercase; display: block; margin: 4px 0;"><?= htmlspecialchars($a['day']) ?></span>
+                <small style="color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;">
+                  <?= date('h:i A', strtotime($a['start_time'])) ?> - <?= date('h:i A', strtotime($a['end_time'])) ?> (<?= intval($a['slot_duration']) ?> min slots)
+                </small>
+              </div>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <p style="color: var(--text-muted);">No active availability schedule configured yet.</p>
+          <?php endif; ?>
+        </div>
+      </section>
+    </div>
 
-  <script>
-    const availability = <?= json_encode($availability) ?>, reserved = <?= json_encode($reserved) ?>, clinic = document.querySelector('#clinic'), date = document.querySelector('#date'), time = document.querySelector('#time'), hint = document.querySelector('#scheduleHint'), days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayFor = v => days[new Date(v + 'T00:00:00').getDay()], ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), schedules = () => availability.filter(x => String(x.clinic_id) === String(clinic.value));
-    function slots() {
-      time.innerHTML = '<option value="">Select a time</option>';
-      if (!clinic.value || !date.value) return;
-      let added = 0;
-      schedules().filter(x => x.day === dayFor(date.value)).forEach(x => {
-        let s = x.start_time.split(':').map(Number), e = x.end_time.split(':').map(Number), cur = s[0] * 60 + s[1], end = e[0] * 60 + e[1], dur = Number(x.slot_duration);
-        for (; cur + dur <= end; cur += dur) {
-          let v = String(Math.floor(cur / 60)).padStart(2, '0') + ':' + String(cur % 60).padStart(2, '0') + ':00';
-          if (reserved.some(r => r.appointment_date === date.value && r.appointment_time === v)) continue;
-          time.add(new Option(new Date('2000-01-01T' + v).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), v));
-          added++;
-        }
-      });
-      hint.textContent = added ? 'Only unbooked slots are shown.' : 'No unbooked slots remain for this date.';
-    }
-    function chooseNextDate() {
-      let active = schedules().map(x => x.day), d = new Date();
-      d.setHours(0, 0, 0, 0);
-      for (let i = 0; i < 14; i++, d.setDate(d.getDate() + 1)) if (active.includes(days[d.getDay()])) { date.value = ymd(d); break }
-    }
-    clinic.addEventListener('change', () => { chooseNextDate(); slots() });
-    date.addEventListener('change', slots);
-    document.querySelector('#reasonDropdown').addEventListener('change', e => {
-      let o = document.querySelector('#otherReason'), other = e.target.value === 'Other';
-      o.style.display = other ? 'block' : 'none';
-      o.disabled = !other;
-      o.required = other;
-      if (!other) o.value = '';
+    <!-- Booking Form HUD -->
+    <aside class="doctor-booking-panel">
+      <p class="eyebrow">PATIENT APPOINTMENT HUD</p>
+      <h2 style="font-size: 24px; margin-bottom: 16px;">Schedule Visit</h2>
+      <?= $msg ?>
+      
+      <form method="post" style="display: grid; gap: 16px;">
+        <div class="field">
+          <label>SELECT CLINIC NODE</label>
+          <select name="clinic_id" id="clinic" required>
+            <option value="">Choose Clinic</option>
+            <?php foreach ($availability as $a): ?>
+              <option value="<?= $a['clinic_id'] ?>"><?= htmlspecialchars($a['clinic_name']) ?> (<?= $a['day'] ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>APPOINTMENT DATE</label>
+          <input id="date" type="date" name="date" min="<?= date('Y-m-d') ?>" required>
+        </div>
+
+        <div class="field">
+          <label>AVAILABILITY FLUX SLOT</label>
+          <select id="time" name="time" required>
+            <option value="">Select Clinic & Date First</option>
+          </select>
+        </div>
+        <p style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan-neon);" id="scheduleHint">Choose clinic and date to generate time slots.</p>
+
+        <div class="field">
+          <label>REASON FOR VISIT</label>
+          <select name="reason_dropdown" id="reasonDropdown" required>
+            <option value="">Select Reason</option>
+            <option>General Checkup</option>
+            <option>Fever / Cold</option>
+            <option>Skin Issues</option>
+            <option>Orthopedic Pain</option>
+            <option>Headache / Migraine</option>
+            <option>Heart / Blood Pressure</option>
+            <option>Pregnancy / Gynecology</option>
+            <option>Follow-up</option>
+            <option value="Other">Other Reason</option>
+          </select>
+          <input name="reason" id="otherReason" maxlength="200" style="display:none; margin-top:10px" placeholder="Specify your medical reason" disabled>
+        </div>
+
+        <div class="field">
+          <label>PATIENT NOTES (OPTIONAL)</label>
+          <textarea name="notes" rows="3" placeholder="Share symptoms or prior records..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" name="book" style="width:100%; margin-top: 10px;">
+          <span>❖ Transmit Booking Request</span>
+        </button>
+      </form>
+    </aside>
+  </section>
+</main>
+
+<script>
+  const availability = <?= json_encode($availability) ?>, reserved = <?= json_encode($reserved) ?>, clinic = document.querySelector('#clinic'), date = document.querySelector('#date'), time = document.querySelector('#time'), hint = document.querySelector('#scheduleHint'), days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayFor = v => days[new Date(v + 'T00:00:00').getDay()], ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'), schedules = () => availability.filter(x => String(x.clinic_id) === String(clinic.value));
+  function slots() {
+    time.innerHTML = '<option value="">Select a time slot</option>';
+    if (!clinic.value || !date.value) return;
+    let added = 0;
+    schedules().filter(x => x.day === dayFor(date.value)).forEach(x => {
+      let s = x.start_time.split(':').map(Number), e = x.end_time.split(':').map(Number), cur = s[0] * 60 + s[1], end = e[0] * 60 + e[1], dur = Number(x.slot_duration);
+      for (; cur + dur <= end; cur += dur) {
+        let v = String(Math.floor(cur / 60)).padStart(2, '0') + ':' + String(cur % 60).padStart(2, '0') + ':00';
+        if (reserved.some(r => r.appointment_date === date.value && r.appointment_time === v)) continue;
+        time.add(new Option(new Date('2000-01-01T' + v).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), v));
+        added++;
+      }
     });
-  </script>
-</body>
-</html>
+    hint.textContent = added ? '❖ ' + added + ' Availability flux slots available.' : '✕ No unbooked slots remain for this date.';
+  }
+  function chooseNextDate() {
+    let active = schedules().map(x => x.day), d = new Date();
+    d.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 14; i++, d.setDate(d.getDate() + 1)) if (active.includes(days[d.getDay()])) { date.value = ymd(d); break }
+  }
+  clinic.addEventListener('change', () => { chooseNextDate(); slots() });
+  date.addEventListener('change', slots);
+  document.querySelector('#reasonDropdown').addEventListener('change', e => {
+    let o = document.querySelector('#otherReason'), other = e.target.value === 'Other';
+    o.style.display = other ? 'block' : 'none';
+    o.disabled = !other;
+    o.required = other;
+    if (!other) o.value = '';
+  });
+</script>
+
+<?php include 'includes/footer.php'; ?>

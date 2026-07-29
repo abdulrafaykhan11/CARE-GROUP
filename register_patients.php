@@ -44,42 +44,41 @@ if (isset($_POST['register_patient'])) {
             }
             else{
                 deleteUploadedProfileFile($targetpath, 'patient');
-                $error = "Error saving to database.";
+                $error = "Error saving patient telemetry to database.";
             }
         }
         else{
-            $error = "Error uploading image.";
+            $error = "Error uploading profile image.";
         }
     }
     else{
-        $error = "Fields can't be empty and must be valid.";
+        $error = "Mandatory fields cannot be empty and must be valid.";
     }
 }
+
+$pageTitle = "Patient Telemetry Setup";
+include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Registration | Care Connect</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="auth-page">
-    <main class="auth-card" style="width: min(600px, 100%);">
-        <a class="brand" href="index.php">care<span>connect</span></a>
-        <h1>Patient Registration</h1>
+
+<div class="auth-page">
+    <main class="auth-card" style="width: min(650px, 100%);">
+        <div class="eyebrow-badge">PATIENT DISCOVERY SETUP</div>
+        <h1>Complete Patient Telemetry</h1>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Provide your address, city node, and emergency contact details for mandatory profile enforcement.
+        </p>
         
         <?php if($error): ?><div class="alert alert-error"><?php echo $error; ?></div><?php endif; ?>
 
-        <form action="" method="post" enctype="multipart/form-data">
+        <form action="" method="post" enctype="multipart/form-data" style="display: grid; gap: 18px;">
             <div class="field">
-                <label>FULL ADDRESS</label>
-                <input type="text" name="full_address" required>
+                <label>FULL RESIDENTIAL ADDRESS <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="text" name="full_address" required placeholder="House/Apartment #, Street, Area">
             </div>
             
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>CITY</label>
+                    <label>CITY NODE <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="city_id" required>
                         <option value="">Select City</option>
                         <?php
@@ -92,7 +91,7 @@ if (isset($_POST['register_patient'])) {
                     </select>
                 </div>
                 <div class="field">
-                    <label>GENDER</label>
+                    <label>GENDER <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="gender" required>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -101,13 +100,13 @@ if (isset($_POST['register_patient'])) {
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>DATE OF BIRTH</label>
+                    <label>DATE OF BIRTH <span style="color: var(--cyan-neon);">*</span></label>
                     <input type="date" name="dob" required>
                 </div>
                 <div class="field">
-                    <label>BLOOD GROUP</label>
+                    <label>BLOOD GROUP <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="blood_group" required>
                         <option value="A+">A+</option>
                         <option value="A-">A-</option>
@@ -121,24 +120,27 @@ if (isset($_POST['register_patient'])) {
                 </div>
             </div>
 
-            <div class="form-row">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>EMERGENCY CONTACT NAME</label>
-                    <input type="text" name="emergency_contact_name" required>
+                    <label>EMERGENCY CONTACT NAME <span style="color: var(--cyan-neon);">*</span></label>
+                    <input type="text" name="emergency_contact_name" required placeholder="Contact Full Name">
                 </div>
                 <div class="field">
-                    <label>EMERGENCY CONTACT NUMBER</label>
+                    <label>EMERGENCY PHONE NUMBER <span style="color: var(--cyan-neon);">*</span></label>
                     <input type="text" name="emergency_contact_number" required placeholder="0300-1234567">
                 </div>
             </div>
 
             <div class="field">
-                <label>PROFILE PICTURE</label>
-                <input type="file" name="profile_picture" required style="border:none; padding:0; padding-top:10px;">
+                <label>PROFILE PICTURE SHARD <span style="color: var(--cyan-neon);">*</span></label>
+                <input type="file" name="profile_picture" required accept="image/*">
             </div>
             
-            <button class="btn btn-primary" type="submit" name="register_patient" style="width:100%; margin-top:20px;">Complete Registration</button>
+            <button class="btn btn-primary" type="submit" name="register_patient" style="width:100%; margin-top:10px;">
+                <span>❖ Finalize Patient Registration</span>
+            </button>
         </form>
     </main>
-</body>
-</html>
+</div>
+
+<?php include 'includes/footer.php'; ?>

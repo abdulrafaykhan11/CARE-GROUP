@@ -18,9 +18,7 @@ $msgType = "success";
 $currentDoc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT profile_image FROM doctors WHERE user_id = '$user_id'"));
 $oldProfileImage = $currentDoc['profile_image'] ?? '';
 
-// =======================================================
-// 📥 2. FORM SUBMIT / UPDATE LOGIC
-// =======================================================
+// 2. FORM SUBMIT / UPDATE LOGIC
 if (isset($_POST['update_profile_btn'])) {
     
     $name              = mysqli_real_escape_string($conn, $_POST['name']);
@@ -34,7 +32,7 @@ if (isset($_POST['update_profile_btn'])) {
     $full_address      = mysqli_real_escape_string($conn, $_POST['full_address']);
     $bio               = mysqli_real_escape_string($conn, $_POST['bio']);
 
-    // 1. Update Users Table (Name, Email, Phone)
+    // 1. Update Users Table
     $user_update = "UPDATE users SET full_name = '$name', email = '$email', phone = '$phone' WHERE user_id = '$user_id'";
     mysqli_query($conn, $user_update);
 
@@ -48,13 +46,9 @@ if (isset($_POST['update_profile_btn'])) {
         $allowed_ext = array('jpg', 'jpeg', 'png', 'webp');
 
         if (in_array($file_ext, $allowed_ext)) {
-            // Unique Image Filename
             $new_image_name = "doctor_profile_" . time() . "_" . rand(1000, 9999) . "." . $file_ext;
-            
-            // Physical Server Disk Path
             $upload_path = "../assets/uploads/doctor/profile/" . $new_image_name;
 
-            // Auto Create Folder
             if (!is_dir("../assets/uploads/doctor/profile/")) {
                 mkdir("../assets/uploads/doctor/profile/", 0777, true);
             }
@@ -69,7 +63,6 @@ if (isset($_POST['update_profile_btn'])) {
     }
 
     if (empty($msg)) {
-        // 3. Check & Update Doctors Table
         $check_doc = mysqli_query($conn, "SELECT doctor_id FROM doctors WHERE user_id = '$user_id'");
         
         if ($check_doc && mysqli_num_rows($check_doc) > 0) {
@@ -93,21 +86,19 @@ if (isset($_POST['update_profile_btn'])) {
             if (!empty($new_image_name) && !empty($oldProfileImage) && basename($oldProfileImage) !== $new_image_name) {
                 deleteUploadedProfileFile($oldProfileImage, 'doctor');
             }
-            $msg = "Profile & Picture updated successfully!";
+            $msg = "Profile telemetry updated successfully!";
             $msgType = "success";
         } else {
             if (!empty($new_image_name)) {
                 deleteUploadedProfileFile($new_image_name, 'doctor');
             }
-            $msg = "SQL Error: " . mysqli_error($conn);
+            $msg = "Database Error: " . mysqli_error($conn);
             $msgType = "error";
         }
     }
 }
 
-// =======================================================
-// 🔍 3. FETCH CURRENT DATA & DROPDOWNS
-// =======================================================
+// 3. FETCH CURRENT DATA & DROPDOWNS
 $user_res  = mysqli_query($conn, "SELECT * FROM users WHERE user_id = '$user_id'");
 $user_data = mysqli_fetch_assoc($user_res);
 
@@ -116,139 +107,146 @@ $doc_data = ($doc_res && mysqli_num_rows($doc_res) > 0) ? mysqli_fetch_assoc($do
 
 $specializations_list = mysqli_query($conn, "SELECT specialization_id, specialization_name FROM specializations WHERE status = 'Active'");
 $cities_list          = mysqli_query($conn, "SELECT city_id, city_name FROM cities WHERE status = 'Active'");
-?>
 
-<!DOCTYPE html>
+$raw_img = $doc_data['profile_image'] ?? '';
+if (!empty($raw_img)) {
+    $file_only = basename($raw_img);
+    $img_src = "../assets/uploads/doctor/profile/" . $file_only;
+} else {
+    $img_src = "";
+}
+?>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Profile Settings | Care Connect</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Doctor Profile Telemetry | CARE Nexus</title>
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
 </head>
-<body class="app-body">
-    <aside class="sidebar">
-        <a class="brand" href="../index.php">care<span>connect</span></a>
-        <p class="side-label">DOCTOR PORTAL</p>
-        <a href="dashboard.php">⌂ Overview</a>
-        <a href="appointments.php">▣ Appointments</a>
-        <a href="availability.php">◷ Availability</a>
-        <a href="clinics.php">⌖ Clinics</a>
-        <a class="active" href="profile.php">⚙ Profile</a>
-        <a href="../logout.php">↪ Sign out</a>
-    </aside>
+<body>
+    <div class="dash-container">
+        <aside class="dash-sidebar">
+            <a class="brand" href="../index.php">CARE <span>NEXUS</span></a>
+            <div class="eyebrow" style="color: var(--emerald-bio); margin-bottom: 24px;">DOCTOR COMMAND HUD</div>
+            <nav class="dash-nav">
+                <a href="dashboard.php">❖ Overview HUD</a>
+                <a href="appointments.php">❖ Appointments Queue</a>
+                <a href="availability.php">❖ Availability Flux</a>
+                <a href="clinics.php">❖ Clinic Nodes</a>
+                <a class="active" href="profile.php">❖ Profile Shard</a>
+                <a href="../logout.php" style="margin-top: auto; color: var(--rose-danger);">❖ Sign Out</a>
+            </nav>
+        </aside>
 
-    <main class="dashboard-main">
-        <header class="dash-header">
-            <div>
-                <p class="eyebrow">ACCOUNT SETTINGS</p>
-                <h1>My Profile</h1>
-            </div>
-        </header>
-
-        <section class="panel" style="max-width: 800px;">
-            <div class="panel-head">
+        <main class="dash-content">
+            <header class="section-heading">
                 <div>
-                    <h2>Update Information</h2>
+                    <p class="eyebrow">PRACTITIONER TELEMETRY SETTINGS</p>
+                    <h2>Doctor Profile Configuration</h2>
                 </div>
-            </div>
+            </header>
 
             <?php if ($msg): ?>
-                <div class="alert alert-<?php echo $msgType; ?>"><?php echo $msg; ?></div>
+                <div class="alert alert-<?=$msgType?>"><?=$msg?></div>
             <?php endif; ?>
 
-            <form action="" method="POST" enctype="multipart/form-data" class="booking-form">
-                
-                <div style="margin-bottom: 30px; text-align: center;">
-                    <?php 
-                        $raw_img = $doc_data['profile_image'] ?? '';
-                        if (!empty($raw_img)) {
-                            $file_only = basename($raw_img); 
-                            $img_src = "../assets/uploads/doctor/profile/" . $file_only;
-                        } else {
-                            $img_src = "https://via.placeholder.com/120?text=No+Image";
-                        }
-                    ?>
-                    <img src="<?php echo $img_src; ?>" alt="Profile Picture" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid var(--gold);"><br>
-                    <div class="field" style="max-width: 300px; margin: auto;">
-                        <label>Change Profile Image</label>
-                        <input type="file" name="profile_image" accept="image/*" style="border:none; padding-top:10px;">
+            <section class="cyber-table-wrap" style="max-width: 900px;">
+                <form action="" method="POST" enctype="multipart/form-data" style="display: grid; gap: 20px;">
+                    
+                    <!-- Profile Image Section -->
+                    <div style="display: flex; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                        <?php if($img_src): ?>
+                            <img src="<?=htmlspecialchars($img_src)?>" onerror="this.src='https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300'" style="width: 110px; height: 110px; border-radius: 20px; border: 3px solid var(--emerald-bio); object-fit: cover;" alt="Profile">
+                        <?php else: ?>
+                            <div style="width: 110px; height: 110px; border-radius: 20px; border: 3px solid var(--border-cyber); background: rgba(16,185,129,0.08); display: flex; align-items: center; justify-content: center; font-size: 36px; color: var(--emerald-bio);">❖</div>
+                        <?php endif; ?>
+                        <div style="flex: 1;">
+                            <div class="field">
+                                <label>CHANGE PROFILE SHARD PHOTO</label>
+                                <input type="file" name="profile_image" accept="image/*">
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="field">
-                        <label>FULL NAME</label>
-                        <input type="text" name="name" value="<?php echo htmlspecialchars($user_data['full_name'] ?? ''); ?>" required>
+                    <!-- Account & Contact -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+                        <div class="field">
+                            <label>FULL NAME <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="text" name="name" value="<?=htmlspecialchars($user_data['full_name'] ?? '')?>" required>
+                        </div>
+                        <div class="field">
+                            <label>EMAIL ADDRESS <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="email" name="email" value="<?=htmlspecialchars($user_data['email'] ?? '')?>" required>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>EMAIL ADDRESS</label>
-                        <input type="email" name="email" value="<?php echo htmlspecialchars($user_data['email'] ?? ''); ?>" required>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="field">
-                        <label>PHONE NUMBER</label>
-                        <input type="text" name="phone" value="<?php echo htmlspecialchars($user_data['phone'] ?? ''); ?>" required>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+                        <div class="field">
+                            <label>PHONE NUMBER <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="text" name="phone" value="<?=htmlspecialchars($user_data['phone'] ?? '')?>" required>
+                        </div>
+                        <div class="field">
+                            <label>SPECIALIZATION FIELD <span style="color: var(--cyan-neon);">*</span></label>
+                            <select name="specialization_id" required>
+                                <option value="">Select Specialization</option>
+                                <?php while ($spec = mysqli_fetch_assoc($specializations_list)): ?>
+                                    <option value="<?=$spec['specialization_id']?>" 
+                                        <?=(isset($doc_data['specialization_id']) && $doc_data['specialization_id'] == $spec['specialization_id']) ? 'selected' : ''?>>
+                                        <?=htmlspecialchars($spec['specialization_name'])?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>SPECIALIZATION</label>
-                        <select name="specialization_id" required>
-                            <option value="">Select Specialization</option>
-                            <?php while ($spec = mysqli_fetch_assoc($specializations_list)): ?>
-                                <option value="<?php echo $spec['specialization_id']; ?>" 
-                                    <?php echo (isset($doc_data['specialization_id']) && $doc_data['specialization_id'] == $spec['specialization_id']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($spec['specialization_name']); ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="field">
-                        <label>CITY</label>
-                        <select name="city_id" required>
-                            <option value="">Select City</option>
-                            <?php while ($city = mysqli_fetch_assoc($cities_list)): ?>
-                                <option value="<?php echo $city['city_id']; ?>" 
-                                    <?php echo (isset($doc_data['city_id']) && $doc_data['city_id'] == $city['city_id']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($city['city_name']); ?>
-                                </option>
-                            <?php endwhile; ?>
-                        </select>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+                        <div class="field">
+                            <label>CITY NODE <span style="color: var(--cyan-neon);">*</span></label>
+                            <select name="city_id" required>
+                                <option value="">Select City</option>
+                                <?php while ($city = mysqli_fetch_assoc($cities_list)): ?>
+                                    <option value="<?=$city['city_id']?>" 
+                                        <?=(isset($doc_data['city_id']) && $doc_data['city_id'] == $city['city_id']) ? 'selected' : ''?>>
+                                        <?=htmlspecialchars($city['city_name'])?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>QUALIFICATION <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="text" name="qualification" value="<?=htmlspecialchars($doc_data['qualification'] ?? '')?>" required>
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>QUALIFICATION</label>
-                        <input type="text" name="qualification" value="<?php echo htmlspecialchars($doc_data['qualification'] ?? ''); ?>" required>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+                        <div class="field">
+                            <label>EXPERIENCE YEARS <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="number" name="experience_years" value="<?=htmlspecialchars($doc_data['experience_years'] ?? '0')?>" min="0" required>
+                        </div>
+                        <div class="field">
+                            <label>CONSULTATION FEE (PKR) <span style="color: var(--cyan-neon);">*</span></label>
+                            <input type="number" name="consultation_fee" value="<?=htmlspecialchars($doc_data['consultation_fee'] ?? '0')?>" step="0.01" min="0" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-row">
                     <div class="field">
-                        <label>EXPERIENCE (YEARS)</label>
-                        <input type="number" name="experience_years" value="<?php echo htmlspecialchars($doc_data['experience_years'] ?? '0'); ?>" min="0" required>
+                        <label>CLINICAL / RESIDENTIAL ADDRESS</label>
+                        <input type="text" name="full_address" value="<?=htmlspecialchars($doc_data['full_address'] ?? '')?>">
                     </div>
+
                     <div class="field">
-                        <label>CONSULTATION FEE (PKR)</label>
-                        <input type="number" name="consultation_fee" value="<?php echo htmlspecialchars($doc_data['consultation_fee'] ?? '0'); ?>" step="0.01" min="0" required>
+                        <label>BIO & CARE PHILOSOPHY</label>
+                        <textarea name="bio" rows="4" placeholder="Describe your clinical background, specialty focus, and patient care approach..."><?=htmlspecialchars($doc_data['bio'] ?? '')?></textarea>
                     </div>
-                </div>
 
-                <div class="field">
-                    <label>FULL CLINIC/HOSPITAL ADDRESS</label>
-                    <input type="text" name="full_address" value="<?php echo htmlspecialchars($doc_data['full_address'] ?? ''); ?>">
-                </div>
-
-                <div class="field">
-                    <label>BIO / ABOUT ME</label>
-                    <textarea name="bio" rows="4" style="width:100%; border:0; border-bottom:2px solid var(--line); font-family:inherit; padding:10px 0; background:transparent;"><?php echo htmlspecialchars($doc_data['bio'] ?? ''); ?></textarea>
-                </div>
-
-                <button type="submit" name="update_profile_btn" class="btn btn-primary" style="width:100%;">Save Profile Settings</button>
-            </form>
-        </section>
-    </main>
+                    <button type="submit" name="update_profile_btn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                        <span>❖ Save Practitioner Telemetry Profile</span>
+                    </button>
+                </form>
+            </section>
+        </main>
+    </div>
 </body>
 </html>
