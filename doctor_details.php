@@ -9,7 +9,7 @@ if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Patient') {
 $uid = (int) $_SESSION['user_id'];
 $patient = mysqli_fetch_assoc(mysqli_query($conn, "SELECT patient_id FROM patients WHERE user_id=$uid"));
 $doctorId = (int) ($_GET['doctor_id'] ?? 0);
-$doctor = mysqli_fetch_assoc(mysqli_query($conn, "SELECT d.*,u.full_name,u.email,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN specializations s ON s.specialization_id=d.specialization_id JOIN cities c ON c.city_id=d.city_id WHERE d.doctor_id=$doctorId"));
+$doctor = mysqli_fetch_assoc(mysqli_query($conn, "SELECT d.*,u.full_name,u.email,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN specializations s ON s.specialization_id=d.specialization_id JOIN cities c ON c.city_id=d.city_id WHERE d.doctor_id=$doctorId AND u.status='Active' AND d.verification_status='Verified'"));
 if (!$patient) {
   header('Location: register_patients.php');
   exit;
@@ -19,7 +19,7 @@ if (!$doctor) {
   exit('Doctor not found.');
 }
 $availability = [];
-$q = mysqli_query($conn, "SELECT da.*,cl.clinic_name FROM doctor_availability da JOIN clinics cl ON cl.clinic_id=da.clinic_id WHERE da.doctor_id=$doctorId AND da.status='Active' AND da.clinic_id IS NOT NULL");
+$q = mysqli_query($conn, "SELECT da.*,cl.clinic_name FROM doctor_availability da JOIN clinics cl ON cl.clinic_id=da.clinic_id WHERE da.doctor_id=$doctorId AND da.status='Active' AND cl.status='Active' AND da.clinic_id IS NOT NULL");
 while ($r = mysqli_fetch_assoc($q))
   $availability[] = $r;
 $reserved = [];
@@ -81,7 +81,7 @@ $img = 'assets/uploads/doctor/profile/' . basename($doctor['profile_image'] ?? '
 
 <body>
   <header class="site-header"><a class="brand" href="index.php">care<span>connect</span></a>
-    <nav><a href="patient/dashboard.php">My dashboard</a><a class="btn btn-outline" href="index.php">Back to doctors</a>
+    <nav><a href="patient/dashboard.php">My dashboard</a><a class="btn btn-outline" href="find_doctor.php">Back to doctors</a>
     </nav>
   </header>
   <main class="booking-layout">
@@ -112,12 +112,16 @@ $img = 'assets/uploads/doctor/profile/' . basename($doctor['profile_image'] ?? '
               <option value="">Choose a clinic and date</option>
             </select></div>
         </div>
+        <p class="note" id="scheduleHint" style="margin-bottom: 25px;">Choose a clinic and date to see slots.</p>
         <div class="field"><label>REASON FOR VISIT</label><select name="reason_dropdown" id="reasonDropdown" required>
             <option value="">Select a reason</option>
             <option>General Checkup</option>
             <option>Fever / Cold</option>
             <option>Skin Issues</option>
             <option>Orthopedic Pain</option>
+            <option>Headache / Migraine</option>
+            <option>Heart / Blood Pressure</option>
+            <option>Pregnancy / Gynecology</option>
             <option>Follow-up</option>
             <option value="Other">Other</option>
           </select><input name="reason" id="otherReason" maxlength="200" style="display:none;margin-top:10px"

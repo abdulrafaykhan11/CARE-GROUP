@@ -1,6 +1,83 @@
-<?php require_once 'config/db.php';
-$search=trim($_GET['search']??'');$city=(int)($_GET['city']??0);$spec=(int)($_GET['spec']??0);$gender=$_GET['gender']??'';
-$where=['1=1']; if($search!==''){ $safe=mysqli_real_escape_string($conn,$search);$where[]="(u.full_name LIKE '%$safe%' OR s.specialization_name LIKE '%$safe%' OR c.city_name LIKE '%$safe%')";} if($city)$where[]="d.city_id=$city";if($spec)$where[]="d.specialization_id=$spec";if(in_array($gender,['Male','Female','Other'],true))$where[]="d.gender='".mysqli_real_escape_string($conn,$gender)."'";
-$doctors=mysqli_query($conn,"SELECT d.*,u.full_name,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN cities c ON c.city_id=d.city_id JOIN specializations s ON s.specialization_id=d.specialization_id WHERE ".implode(' AND ',$where)." ORDER BY d.verification_status='Verified' DESC,d.created_at DESC");
-$cities=mysqli_query($conn,"SELECT city_id,city_name FROM cities WHERE status='Active' ORDER BY city_name");$specs=mysqli_query($conn,"SELECT specialization_id,specialization_name FROM specializations WHERE status='Active' ORDER BY specialization_name");
-?><!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Care Connect | Find doctors</title><link rel="stylesheet" href="assets/css/style.css"></head><body><header class="site-header"><a class="brand" href="index.php">care<span>connect</span></a><nav><a href="#doctors">Find doctors</a><?php if(!empty($_SESSION['user_id'])): ?><a href="<?=($_SESSION['role']==='Doctor'?'doctor/dashboard.php':'patient/dashboard.php')?>">My dashboard</a><a class="btn btn-outline" href="logout.php">Sign out</a><?php else:?><a href="login.php">Sign in</a><a class="btn btn-primary" href="register.php">Create account</a><?php endif;?></nav></header><section class="hero"><div class="hero-inner"><p class="eyebrow">ELEVATED CARE</p><h1>The right doctor is <span>closer</span> than you think.</h1><p class="hero-copy">Search trusted specialists, explore their expertise, and request your appointment in a few calm, clear, and elegant steps.</p></div></section><form class="search-card" method="get"><div class="filter-grid"><div class="field"><label>Search by doctor or specialty</label><input name="search" value="<?=htmlspecialchars($search)?>" placeholder="e.g. cardiologist, Dr. Samia"></div><div class="field"><label>City</label><select name="city"><option value="">All cities</option><?php while($x=mysqli_fetch_assoc($cities)):?><option value="<?=$x['city_id']?>" <?=$city==$x['city_id']?'selected':''?>><?=htmlspecialchars($x['city_name'])?></option><?php endwhile;?></select></div><div class="field"><label>Specialty</label><select name="spec"><option value="">All specialties</option><?php while($x=mysqli_fetch_assoc($specs)):?><option value="<?=$x['specialization_id']?>" <?=$spec==$x['specialization_id']?'selected':''?>><?=htmlspecialchars($x['specialization_name'])?></option><?php endwhile;?></select></div><div class="field"><label>Gender</label><select name="gender"><option value="">Any</option><?php foreach(['Male','Female','Other'] as $g):?><option <?=$gender===$g?'selected':''?>><?=$g?></option><?php endforeach;?></select></div><button class="btn btn-primary" type="submit">Search</button></div></form><main id="doctors" class="directory"><div class="section-heading"><div><p class="eyebrow">SPECIALISTS</p><h2>Meet your care team</h2></div><span><?=mysqli_num_rows($doctors)?> doctors found</span></div><?php if(mysqli_num_rows($doctors)):?><div class="doctor-grid"><?php while($d=mysqli_fetch_assoc($doctors)):$img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');?><article class="doctor-card"><img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.style.display='none'" alt=""><div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div><h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3><p><?=htmlspecialchars($d['qualification'])?> &middot; <?=htmlspecialchars($d['city_name'])?></p><p><?=htmlspecialchars(mb_strimwidth($d['bio']??'Dedicated medical professional.',0,100,'…'))?></p><div class="doctor-meta"><span><?=intval($d['experience_years'])?> yrs experience</span><span>PKR <?=number_format($d['consultation_fee'])?></span></div><a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>">View & book</a></article><?php endwhile;?></div><?php else:?><div class="empty-state"><h3>No matching doctors</h3><p>Try another specialty, city, or search term.</p></div><?php endif;?></main></body></html>
+<?php
+require_once 'config/db.php';
+
+function excerptText(?string $text, int $limit = 110): string
+{
+    $text = trim($text ?: 'Dedicated medical professional.');
+    return strlen($text) > $limit ? substr($text, 0, $limit - 3) . '...' : $text;
+}
+
+$doctors = mysqli_query($conn, "SELECT d.*,u.full_name,s.specialization_name,c.city_name FROM doctors d JOIN users u ON u.user_id=d.user_id JOIN cities c ON c.city_id=d.city_id JOIN specializations s ON s.specialization_id=d.specialization_id WHERE u.status='Active' AND d.verification_status='Verified' ORDER BY d.experience_years DESC,d.created_at DESC LIMIT 6");
+?>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Care Connect | Trusted doctors</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.php">care<span>connect</span></a>
+    <nav>
+      <a href="find_doctor.php">Find doctor</a>
+      <a href="#doctors">Top doctors</a>
+      <?php if(!empty($_SESSION['user_id'])): ?>
+        <a href="<?=($_SESSION['role']==='Doctor'?'doctor/dashboard.php':(($_SESSION['role'] ?? '')==='Admin'?'admin/dashboard.php':'patient/dashboard.php'))?>">My dashboard</a>
+        <a class="btn btn-outline" href="logout.php">Sign out</a>
+      <?php else: ?>
+        <a href="login.php">Sign in</a>
+        <a class="btn btn-primary" href="register.php">Create account</a>
+      <?php endif; ?>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">ELEVATED CARE</p>
+      <h1>The right doctor is <span>closer</span> than you think.</h1>
+      <p class="hero-copy">Start with our featured doctors, or search by specialty to find the exact care you need.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="find_doctor.php">Find doctor by specialty</a>
+      </div>
+    </div>
+  </section>
+
+  <main id="doctors" class="directory">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">FEATURED DOCTORS</p>
+        <h2>Top doctors to start with</h2>
+      </div>
+      <a class="btn btn-outline" href="find_doctor.php">View all doctors</a>
+    </div>
+
+    <?php if(mysqli_num_rows($doctors)): ?>
+      <div class="doctor-grid">
+        <?php while($d=mysqli_fetch_assoc($doctors)):
+          $img='assets/uploads/doctor/profile/'.basename($d['profile_image']??'');
+        ?>
+          <article class="doctor-card">
+            <img class="doctor-photo" src="<?=htmlspecialchars($img)?>" onerror="this.style.display='none'" alt="">
+            <div class="specialty"><?=htmlspecialchars($d['specialization_name'])?></div>
+            <h3>Dr. <?=htmlspecialchars($d['full_name'])?></h3>
+            <p><?=htmlspecialchars($d['qualification'])?> &middot; <?=htmlspecialchars($d['city_name'])?></p>
+            <p><?=htmlspecialchars(excerptText($d['bio'] ?? ''))?></p>
+            <div class="doctor-meta">
+              <span><?=intval($d['experience_years'])?> yrs experience</span>
+              <span>PKR <?=number_format($d['consultation_fee'])?></span>
+            </div>
+            <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>">View & book</a>
+          </article>
+        <?php endwhile; ?>
+      </div>
+    <?php else: ?>
+      <div class="empty-state">
+        <h3>No doctors available yet</h3>
+        <p>Add doctors from the registration flow, then they will appear here.</p>
+      </div>
+    <?php endif; ?>
+  </main>
+</body>
+</html>
