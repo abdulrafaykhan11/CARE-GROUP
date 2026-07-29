@@ -267,6 +267,61 @@ a {
   gap: 10px;
   margin: 34px 0 0;
 }
+.find-directory {
+  max-width: 1240px;
+  margin-top: 40px;
+}
+.doctor-results-section {
+  margin-bottom: 90px;
+}
+.specialty-deep-guide {
+  border-top: 1px solid var(--line);
+  padding-top: 62px;
+}
+.guide-lead {
+  max-width: 900px;
+  margin: -24px 0 34px;
+  color: var(--ink-light);
+  font-size: 19px;
+  line-height: 1.8;
+}
+.specialty-story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.specialty-story-grid article,
+.guide-top-doctors,
+.specialty-faqs {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.specialty-story-grid h3,
+.guide-top-doctors h2,
+.specialty-faqs h3 {
+  font-family: 'Playfair Display', serif;
+  margin: 0 0 14px;
+  letter-spacing: 0;
+}
+.specialty-story-grid p {
+  color: var(--muted);
+  line-height: 1.85;
+  margin: 0 0 15px;
+}
+.guide-top-doctors,
+.specialty-faqs {
+  margin-top: 24px;
+}
+.guide-top-doctors .admin-simple-list a,
+.guide-top-doctors .admin-simple-list div {
+  grid-template-columns: 1fr;
+}
+.guide-top-doctors .admin-simple-list span {
+  white-space: normal;
+}
 .change-note {
   margin-top: 8px !important;
   color: var(--danger) !important;
@@ -855,6 +910,39 @@ a {
 .admin-table small {
   overflow-wrap: anywhere;
 }
+.admin-directory-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.admin-directory-stack {
+  display: grid;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+.directory-admin-list .admin-table,
+.directory-admin-list .admin-table.compact {
+  max-height: none;
+  overflow: visible;
+}
+.directory-admin-list .admin-table article {
+  grid-template-columns: minmax(320px, 1fr) minmax(190px, auto) auto;
+}
+.directory-admin-list .admin-table article > div {
+  min-width: 0;
+}
+.directory-admin-list .admin-table strong {
+  font-size: 16px;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.directory-admin-list .admin-table span,
+.directory-admin-list .admin-table small {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
 .inline-admin-form select {
   max-width: 160px;
 }
@@ -1234,6 +1322,147 @@ a {
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .booking-form .field { margin: 20px 0; }
 .booking-form textarea { resize: vertical; min-height: 100px; }
+.doctor-profile-page {
+  max-width: 1280px;
+  margin: 54px auto 90px;
+  padding: 0 22px;
+}
+.doctor-profile-hero {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 30px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 34px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 28px;
+}
+.doctor-profile-photo img {
+  width: 170px;
+  height: 170px;
+  border-radius: 22px;
+  object-fit: cover;
+  background: var(--mint);
+  box-shadow: var(--shadow-sm);
+}
+.doctor-profile-intro h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.05;
+  margin: 0 0 14px;
+  letter-spacing: 0;
+}
+.doctor-profile-intro > p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 0;
+}
+.doctor-profile-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+.doctor-profile-metrics article {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(15,82,87,0.025);
+}
+.doctor-profile-metrics span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.doctor-profile-metrics strong {
+  color: var(--teal);
+  font-size: 18px;
+}
+.doctor-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  gap: 28px;
+  align-items: start;
+}
+.doctor-content-sections {
+  display: grid;
+  gap: 22px;
+}
+.doctor-story-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+}
+.doctor-story-panel h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.12;
+  margin: 0 0 18px;
+  letter-spacing: 0;
+}
+.doctor-story-panel p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.9;
+  margin: 0 0 16px;
+}
+.compact-heading {
+  margin-bottom: 22px;
+}
+.compact-heading h2 {
+  font-size: 30px;
+}
+.doctor-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.doctor-schedule-grid article {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgba(15,82,87,0.025);
+}
+.doctor-schedule-grid strong,
+.doctor-schedule-grid span,
+.doctor-schedule-grid small {
+  display: block;
+}
+.doctor-schedule-grid span,
+.doctor-schedule-grid small {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.doctor-faqs details {
+  border-top: 1px solid var(--line);
+  padding: 16px 0;
+}
+.doctor-faqs summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.doctor-faqs details p {
+  margin-top: 12px;
+}
+.doctor-booking-panel {
+  position: sticky;
+  top: 108px;
+}
+.doctor-booking-panel .booking-form {
+  padding: 30px;
+}
+.doctor-booking-panel .form-row {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
 
 /* Utilities */
 .alert { padding: 16px 20px; border-radius: 12px; margin: 0 0 24px; font-size: 14px; font-weight: 500; }
@@ -1253,6 +1482,12 @@ a {
   .booking-layout { grid-template-columns: 1fr; }
   .find-layout { grid-template-columns: 1fr; }
   .specialty-guide { position: static; }
+  .specialty-story-grid,
+  .doctor-profile-hero,
+  .doctor-profile-layout,
+  .doctor-profile-metrics { grid-template-columns: 1fr; }
+  .doctor-booking-panel { position: static; }
+  .doctor-profile-photo img { width: 130px; height: 130px; }
   .admin-hero-panel { flex-direction: column; align-items: flex-start; }
   .admin-metric-grid,
   .admin-insight-grid,
@@ -1267,6 +1502,7 @@ a {
   .admin-doctor-card-main { grid-template-columns: 72px 1fr; }
   .admin-doctor-card-main img { width: 72px; height: 72px; }
   .admin-table article { grid-template-columns: 1fr; }
+  .directory-admin-list .admin-table article { grid-template-columns: 1fr; }
   .inline-admin-form { width: 100%; }
   .inline-admin-form select { flex: 1; }
   .appointment-card { grid-template-columns: 50px 1fr; gap: 15px; }

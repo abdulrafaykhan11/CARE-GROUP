@@ -24,7 +24,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
         </header>
         <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
 
-        <section class="admin-split three">
+        <section class="admin-directory-actions">
             <article class="panel admin-clean-panel">
                 <div class="panel-head"><div><p class="eyebrow">ADD CLINIC</p><h2>Clinic</h2></div></div>
                 <form method="post" class="booking-form">
@@ -59,8 +59,8 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
             </article>
         </section>
 
-        <section class="admin-split">
-            <article class="panel admin-table-panel">
+        <section class="admin-directory-stack">
+            <article class="panel admin-table-panel directory-admin-list">
                 <div class="panel-head"><div><p class="eyebrow">CLINICS</p><h2>Website locations</h2></div></div>
                 <div class="admin-table compact">
                     <?php while($c = mysqli_fetch_assoc($clinics)): ?>
@@ -72,7 +72,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                     <?php endwhile; ?>
                 </div>
             </article>
-            <article class="panel admin-table-panel">
+            <article class="panel admin-table-panel directory-admin-list">
                 <div class="panel-head"><div><p class="eyebrow">SPECIALIZATIONS</p><h2>Public categories</h2></div></div>
                 <div class="admin-table compact">
                     <?php while($s = mysqli_fetch_assoc($specializations)): ?>
@@ -86,7 +86,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
             </article>
         </section>
 
-        <section class="panel admin-table-panel">
+        <section class="panel admin-table-panel directory-admin-list">
             <div class="panel-head"><div><p class="eyebrow">CITIES</p><h2>City visibility</h2></div></div>
             <div class="admin-table relaxed">
                 <?php while($city = mysqli_fetch_assoc($cities)): ?>
