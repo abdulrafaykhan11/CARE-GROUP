@@ -3,13 +3,13 @@
 
 UPDATE users
 SET full_name='Admin',
-    password='$2y$10$8meiJAioX7OgP/NezbmkCuum8qc6nM9vTa2VtLvZaoBC6xsQcgl/S',
+    password='$2y$10$lFBwUgat0rEAEun7bms7O.W373irf3RvjT4c3aBmjBwWCn0.5ZfU.',
     role='Admin',
     status='Active'
 WHERE email='admin@gmail.com';
 
 INSERT INTO users (full_name,email,phone,password,role,status)
-SELECT 'Admin','admin@gmail.com','03000000000','$2y$10$8meiJAioX7OgP/NezbmkCuum8qc6nM9vTa2VtLvZaoBC6xsQcgl/S','Admin','Active'
+SELECT 'Admin','admin@gmail.com','03000000000','$2y$10$lFBwUgat0rEAEun7bms7O.W373irf3RvjT4c3aBmjBwWCn0.5ZfU.','Admin','Active'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email='admin@gmail.com');
 
 ALTER TABLE appointments

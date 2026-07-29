@@ -346,7 +346,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `full_name`, `email`, `phone`, `password`, `role`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'admin', 'admin@gmail.com', '03408714704', 'admin123', 'Admin', 'Active', '2026-07-17 07:59:39', '2026-07-17 07:59:39'),
+(1, 'Admin', 'admin@gmail.com', '03408714704', '$2y$10$lFBwUgat0rEAEun7bms7O.W373irf3RvjT4c3aBmjBwWCn0.5ZfU.', 'Admin', 'Active', '2026-07-17 07:59:39', '2026-07-17 07:59:39'),
 (2, 'Zubair', 'zubair@gmail.com', '03566283652', '$2y$10$XDlhj1XaSU07wNecw.AWTut9YK49qrK98gZ/w.aRNyu7ZNvfCZzIe', 'Patient', 'Active', '2026-07-17 08:11:57', '2026-07-17 08:11:57'),
 (3, 'Sami', 'sami@gmail.com', '03675472575', '$2y$10$F2fMgMyuqQlxo8EL2KEvGOsxURnnynejXX3UXKykoId6RxE1D43bW', 'Doctor', 'Active', '2026-07-17 11:38:45', '2026-07-17 11:38:45'),
 (4, 'Zahid Ali', 'zahid@gmail.com', '03653712809', '$2y$10$Z45ulgBYLnMJHMXlQg8DWOet/cU7hW3e4.52e51GxdWY3sZ2JWmKG', 'Doctor', 'Active', '2026-07-17 16:51:58', '2026-07-17 16:51:58'),
