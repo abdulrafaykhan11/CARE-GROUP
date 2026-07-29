@@ -4,9 +4,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 include "../config/db.php";
+require_once __DIR__ . '/../config/upload_cleanup.php';
 
 // 1. Auth Check
-if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Doctor') {
     header("Location: ../login.php");
     exit();
 }
@@ -14,6 +15,8 @@ if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $msg = "";
 $msgType = "success";
+$currentDoc = mysqli_fetch_assoc(mysqli_query($conn, "SELECT profile_image FROM doctors WHERE user_id = '$user_id'"));
+$oldProfileImage = $currentDoc['profile_image'] ?? '';
 
 // =======================================================
 // 📥 2. FORM SUBMIT / UPDATE LOGIC
@@ -87,9 +90,15 @@ if (isset($_POST['update_profile_btn'])) {
         }
 
         if (mysqli_query($conn, $doc_update)) {
+            if (!empty($new_image_name) && !empty($oldProfileImage) && basename($oldProfileImage) !== $new_image_name) {
+                deleteUploadedProfileFile($oldProfileImage, 'doctor');
+            }
             $msg = "Profile & Picture updated successfully!";
             $msgType = "success";
         } else {
+            if (!empty($new_image_name)) {
+                deleteUploadedProfileFile($new_image_name, 'doctor');
+            }
             $msg = "SQL Error: " . mysqli_error($conn);
             $msgType = "error";
         }

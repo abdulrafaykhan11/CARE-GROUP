@@ -1,5 +1,6 @@
 <?php
 include 'config/db.php';
+require_once 'config/upload_cleanup.php';
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php?error=please_login");
     exit();
@@ -42,6 +43,7 @@ if (isset($_POST['register_patient'])) {
                 exit();
             }
             else{
+                deleteUploadedProfileFile($targetpath, 'patient');
                 $error = "Error saving to database.";
             }
         }

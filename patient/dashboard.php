@@ -33,6 +33,7 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name doctor_name,s.specialization
         <p class="side-label">PATIENT PORTAL</p>
         <a class="active" href="dashboard.php">Overview</a>
         <a href="../find_doctor.php">Find doctors</a>
+        <a href="profile.php">Profile</a>
         <a href="../logout.php">Sign out</a>
     </aside>
     <main class="dashboard-main">

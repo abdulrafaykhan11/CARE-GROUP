@@ -1,5 +1,6 @@
 <?php
 include "config/db.php"; 
+require_once "config/upload_cleanup.php";
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php?error=please_login");
     exit();
@@ -79,10 +80,16 @@ if (isset($_POST["register_doctor"])) {
                     header("Location: doctor/dashboard.php");
                     exit();
                 } else {
+                    deleteUploadedProfileFile($newimage, 'doctor');
+                    deleteUploadedAssetFile($targetlicense);
+                    deleteUploadedAssetFile($targetdegree);
                     $error = "Database Error: " . mysqli_error($conn);
                 }
 
             } else {
+                deleteUploadedProfileFile($newimage, 'doctor');
+                deleteUploadedAssetFile($targetlicense);
+                deleteUploadedAssetFile($targetdegree);
                 $error = "Error in uploading files. Please try again.";
             }
 
