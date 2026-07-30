@@ -108,168 +108,187 @@ if(isset($_POST['update_appointment'])){
 }
 
 $returnUrl = $role === 'Doctor' ? 'doctor/dashboard.php' : 'patient/dashboard.php';
+$pageTitle = 'Edit Appointment Shard';
+include 'includes/header.php';
 ?>
-<!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Edit Appointment | Care Connect</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body class="app-body">
-    <main class="dashboard-main" style="max-width: 680px; margin: 50px auto; padding: 0 20px;">
-        <header class="dash-header">
+
+<div class="auth-page" style="min-height: calc(100vh - 120px); padding: 50px 20px;">
+    <main class="auth-card" style="width: min(780px, 100%); border-color: var(--border-cyber-glow);">
+        <div class="eyebrow-badge">APPOINTMENT RE-FLUX HUD</div>
+        <h1>Modify Visit Details</h1>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">
+            Update visit reason, select a new date and time slot, or review existing appointment telemetry.
+        </p>
+
+        <!-- Telemetry Summary Shard -->
+        <div style="background: rgba(4, 8, 20, 0.85); border: 1px solid var(--border-cyber); border-radius: var(--radius-md); padding: 20px; margin-bottom: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
             <div>
-                <p class="eyebrow">APPOINTMENT DETAILS</p>
-                <h1>Edit Appointment</h1>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">PATIENT NAME</span>
+                <strong style="color: #FFF; font-size: 15px;"><?=htmlspecialchars($app['patient_name'])?></strong>
             </div>
-            <a class="btn btn-outline" href="<?=$returnUrl?>">Back to dashboard</a>
-        </header>
-
-        <section class="panel">
-            <div class="panel-head" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-                <p><strong>Patient:</strong> <?=htmlspecialchars($app['patient_name'])?></p>
-                <p><strong>Doctor:</strong> Dr. <?=htmlspecialchars($app['doctor_name'])?> (<?=htmlspecialchars($app['specialization_name'])?>)</p>
-                <p><strong>Clinic:</strong> <?=htmlspecialchars($app['clinic_name'])?></p>
-                <p><strong>Status:</strong> <span class="status status-<?=$app['status']?>"><?=$app['status']?></span></p>
-                <?php if(!empty($app['reschedule_reason'])): ?>
-                    <p><strong>Last schedule change:</strong> <?=htmlspecialchars($app['reschedule_reason'])?> <span class="note">by <?=htmlspecialchars($app['rescheduled_by'])?></span></p>
-                <?php endif; ?>
+            <div>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">SPECIALIST DOCTOR</span>
+                <strong style="color: var(--cyan-neon); font-size: 15px;">Dr. <?=htmlspecialchars($app['doctor_name'])?></strong>
+                <small style="display: block; color: var(--text-muted); font-size: 11px; font-family: var(--font-mono);"><?=htmlspecialchars($app['specialization_name'])?></small>
             </div>
+            <div>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">CLINIC LOCATION</span>
+                <strong style="color: #FFF; font-size: 15px;"><?=htmlspecialchars($app['clinic_name'])?></strong>
+            </div>
+            <div>
+                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">VISIT STATUS</span>
+                <span class="status status-<?=$app['status']?>"><?=$app['status']?></span>
+            </div>
+        </div>
 
-            <?=$msg?>
+        <?php if(!empty($app['reschedule_reason'])): ?>
+            <div class="alert alert-error" style="background: rgba(0, 242, 254, 0.08); border-color: rgba(0, 242, 254, 0.3); color: var(--cyan-neon); margin-bottom: 24px;">
+                <strong>Last Reschedule Audit:</strong> <?=htmlspecialchars($app['reschedule_reason'])?>
+                <span style="display: block; font-size: 11px; opacity: 0.8; margin-top: 4px;">Modified by <?=htmlspecialchars($app['rescheduled_by'])?> at <?=date('d M Y, h:i A', strtotime($app['rescheduled_at']))?></span>
+            </div>
+        <?php endif; ?>
 
-            <form method="post" class="booking-form" style="margin-top: 20px;">
-                <div class="form-row">
-                    <div class="field">
-                        <label>DATE</label>
-                        <input id="date" type="date" name="date" min="<?=date('Y-m-d')?>" value="<?=$app['appointment_date']?>" required>
-                    </div>
-                    <div class="field">
-                        <label>AVAILABLE TIME</label>
-                        <select id="time" name="time" required>
-                            <option value="">Select date first</option>
-                        </select>
-                    </div>
-                </div>
-                <p class="note" id="scheduleHint" style="margin-bottom: 25px;">Checking schedule...</p>
+        <?=$msg?>
 
+        <form method="post" style="display: grid; gap: 18px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
                 <div class="field">
-                    <label>REASON FOR VISIT</label>
-                    <select name="reason_dropdown" id="reason_dropdown" required onchange="toggleOtherReason()">
-                        <option value="">Select a reason</option>
-                        <option value="General Checkup">General Checkup</option>
-                        <option value="Fever / Cold">Fever / Cold</option>
-                        <option value="Skin Issues">Skin Issues</option>
-                        <option value="Orthopedic Pain">Orthopedic Pain</option>
-                        <option value="Headache / Migraine">Headache / Migraine</option>
-                        <option value="Heart / Blood Pressure">Heart / Blood Pressure</option>
-                        <option value="Pregnancy / Gynecology">Pregnancy / Gynecology</option>
-                        <option value="Follow-up">Follow-up</option>
-                        <option value="Other">Other</option>
+                    <label>APPOINTMENT DATE <span style="color: var(--cyan-neon);">*</span></label>
+                    <input id="date" type="date" name="date" min="<?=date('Y-m-d')?>" value="<?=$app['appointment_date']?>" required>
+                </div>
+                <div class="field">
+                    <label>AVAILABLE TIME SLOT <span style="color: var(--cyan-neon);">*</span></label>
+                    <select id="time" name="time" required>
+                        <option value="">Select date first</option>
                     </select>
-                    <input name="reason" id="reason_input" maxlength="200" style="display:none; margin-top:10px; border-bottom: 2px solid var(--gold);" placeholder="Please specify your reason" disabled>
                 </div>
+            </div>
+            
+            <p id="scheduleHint" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon); margin-top: -6px;">Checking clinic schedule...</p>
 
-                <div class="field" id="changeReasonWrap" style="display:none;">
-                    <label>REASON FOR CHANGING DATE / TIME</label>
-                    <textarea name="change_reason" id="changeReason" rows="3" maxlength="255" placeholder="Explain why this appointment needs to be moved"></textarea>
-                </div>
+            <div class="field">
+                <label>REASON FOR VISIT <span style="color: var(--cyan-neon);">*</span></label>
+                <select name="reason_dropdown" id="reason_dropdown" required onchange="toggleOtherReason()">
+                    <option value="">Select a reason</option>
+                    <option value="General Checkup">General Checkup</option>
+                    <option value="Fever / Cold">Fever / Cold</option>
+                    <option value="Skin Issues">Skin Issues</option>
+                    <option value="Orthopedic Pain">Orthopedic Pain</option>
+                    <option value="Headache / Migraine">Headache / Migraine</option>
+                    <option value="Heart / Blood Pressure">Heart / Blood Pressure</option>
+                    <option value="Pregnancy / Gynecology">Pregnancy / Gynecology</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input name="reason" id="reason_input" maxlength="200" style="display:none; margin-top:12px;" placeholder="Please specify your custom reason" disabled>
+            </div>
 
-                <button class="btn btn-primary" name="update_appointment" style="width:100%">Save Changes</button>
-            </form>
-        </section>
+            <div class="field" id="changeReasonWrap" style="display:none; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.4); padding: 16px; border-radius: var(--radius-sm);">
+                <label style="color: #FDE047;">REASON FOR CHANGING DATE / TIME <span style="color: var(--cyan-neon);">*</span></label>
+                <textarea name="change_reason" id="changeReason" rows="3" maxlength="255" placeholder="Explain why this appointment date or time is being moved..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px;">
+                <a class="btn btn-outline" href="<?=$returnUrl?>" style="width:100%;">
+                    <span>Back to Dashboard</span>
+                </a>
+                <button class="btn btn-primary" name="update_appointment" type="submit" style="width:100%;">
+                    <span>❖ Commit Changes</span>
+                </button>
+            </div>
+        </form>
     </main>
+</div>
 
-    <script>
-        const existingReason = <?=json_encode($app['reason'])?>;
-        const originalDate = <?=json_encode($app['appointment_date'])?>;
-        const originalTime = <?=json_encode($app['appointment_time'])?>;
-        const drop = document.getElementById('reason_dropdown');
-        const inp = document.getElementById('reason_input');
+<script>
+    const existingReason = <?=json_encode($app['reason'])?>;
+    const originalDate = <?=json_encode($app['appointment_date'])?>;
+    const originalTime = <?=json_encode($app['appointment_time'])?>;
+    const drop = document.getElementById('reason_dropdown');
+    const inp = document.getElementById('reason_input');
 
-        let found = false;
-        for(let i=0; i<drop.options.length; i++){
-            if(drop.options[i].value === existingReason){
-                drop.selectedIndex = i;
-                found = true;
-                break;
-            }
+    let found = false;
+    for(let i=0; i<drop.options.length; i++){
+        if(drop.options[i].value === existingReason){
+            drop.selectedIndex = i;
+            found = true;
+            break;
         }
-        if(!found && existingReason){
-            drop.value = 'Other';
-            inp.style.display = 'block';
-            inp.disabled = false;
-            inp.required = true;
-            inp.value = existingReason;
-        }
+    }
+    if(!found && existingReason){
+        drop.value = 'Other';
+        inp.style.display = 'block';
+        inp.disabled = false;
+        inp.required = true;
+        inp.value = existingReason;
+    }
 
-        function toggleOtherReason() {
-            const isOther = drop.value === 'Other';
-            inp.style.display = isOther ? 'block' : 'none';
-            inp.disabled = !isOther;
-            inp.required = isOther;
-            if(!isOther) inp.value = '';
-        }
+    function toggleOtherReason() {
+        const isOther = drop.value === 'Other';
+        inp.style.display = isOther ? 'block' : 'none';
+        inp.disabled = !isOther;
+        inp.required = isOther;
+        if(!isOther) inp.value = '';
+    }
 
-        const availability = <?=json_encode($availability)?>;
-        const reserved = <?=json_encode($reserved)?>;
-        const date = document.querySelector('#date');
-        const time = document.querySelector('#time');
-        const hint = document.querySelector('#scheduleHint');
-        const changeReasonWrap = document.getElementById('changeReasonWrap');
-        const changeReason = document.getElementById('changeReason');
-        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const availability = <?=json_encode($availability)?>;
+    const reserved = <?=json_encode($reserved)?>;
+    const date = document.querySelector('#date');
+    const time = document.querySelector('#time');
+    const hint = document.querySelector('#scheduleHint');
+    const changeReasonWrap = document.getElementById('changeReasonWrap');
+    const changeReason = document.getElementById('changeReason');
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-        function localDay(v){ return days[new Date(v+'T00:00:00').getDay()]; }
+    function localDay(v){ return days[new Date(v+'T00:00:00').getDay()]; }
 
-        function updateChangeReasonRequirement(){
-            const changed = date.value !== originalDate || time.value !== originalTime;
-            changeReasonWrap.style.display = changed ? 'block' : 'none';
-            changeReason.required = changed;
-            if(!changed) changeReason.value = '';
-        }
+    function updateChangeReasonRequirement(){
+        const changed = date.value !== originalDate || time.value !== originalTime;
+        changeReasonWrap.style.display = changed ? 'block' : 'none';
+        changeReason.required = changed;
+        if(!changed) changeReason.value = '';
+    }
 
-        function slots(){
-            time.innerHTML = '<option value="">Select a time</option>';
-            if(!date.value) return;
-            let added = 0;
-            availability.filter(x => x.day === localDay(date.value)).forEach(x => {
-                let s = x.start_time.split(':').map(Number);
-                let e = x.end_time.split(':').map(Number);
-                let cur = s[0]*60 + s[1];
-                let end = e[0]*60 + e[1];
-                let duration = Number(x.slot_duration);
+    function slots(){
+        time.innerHTML = '<option value="">Select a time slot</option>';
+        if(!date.value) return;
+        let added = 0;
+        availability.filter(x => x.day === localDay(date.value)).forEach(x => {
+            let s = x.start_time.split(':').map(Number);
+            let e = x.end_time.split(':').map(Number);
+            let cur = s[0]*60 + s[1];
+            let end = e[0]*60 + e[1];
+            let duration = Number(x.slot_duration);
 
-                for(; cur + duration <= end; cur += duration){
-                    let h = String(Math.floor(cur/60)).padStart(2,'0');
-                    let m = String(cur%60).padStart(2,'0');
-                    let v = h + ':' + m + ':00';
-                    if(reserved.some(r => r.appointment_date === date.value && r.appointment_time === v)) continue;
-                    let label = new Date('2000-01-01T'+v).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-                    let opt = new Option(label, v);
-                    if(date.value === originalDate && v === originalTime){
-                        opt.selected = true;
-                    }
-                    time.add(opt);
-                    added++;
+            for(; cur + duration <= end; cur += duration){
+                let h = String(Math.floor(cur/60)).padStart(2,'0');
+                let m = String(cur%60).padStart(2,'0');
+                let v = h + ':' + m + ':00';
+                if(reserved.some(r => r.appointment_date === date.value && r.appointment_time === v)) continue;
+                let label = new Date('2000-01-01T'+v).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+                let opt = new Option(label, v);
+                if(date.value === originalDate && v === originalTime){
+                    opt.selected = true;
                 }
-            });
-
-            if(!added){
-                time.options[0].text = 'Doctor is unavailable on ' + localDay(date.value);
-                hint.textContent = 'Please choose one of these days: ' + [...new Set(availability.map(x=>x.day))].join(', ');
-            } else {
-                hint.textContent = 'Available unbooked slots loaded for ' + localDay(date.value) + '.';
+                time.add(opt);
+                added++;
             }
-            updateChangeReasonRequirement();
-        }
+        });
 
-        date.addEventListener('change', slots);
-        time.addEventListener('change', updateChangeReasonRequirement);
-        toggleOtherReason();
-        slots();
-    </script>
-</body>
-</html>
+        if(!added){
+            time.options[0].text = 'Doctor unavailable on ' + localDay(date.value);
+            hint.textContent = '✕ Available days: ' + [...new Set(availability.map(x=>x.day))].join(', ');
+        } else {
+            hint.textContent = '❖ Unbooked availability slots loaded for ' + localDay(date.value) + '.';
+        }
+        updateChangeReasonRequirement();
+    }
+
+    date.addEventListener('change', slots);
+    time.addEventListener('change', updateChangeReasonRequirement);
+    toggleOtherReason();
+    slots();
+</script>
+
+<?php include 'includes/footer.php'; ?>
+
