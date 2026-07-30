@@ -19,7 +19,7 @@ if (isset($conn) && $conn) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | CARE Group Nexus' : 'CARE Group | Cybernetic Clinical Platform' ?></title>
+  <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | CARE Group' : 'CARE Group | Trusted Medical Care Platform' ?></title>
   
   <!-- Modern Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +55,7 @@ if (isset($conn) && $conn) {
           if(($_SESSION['role'] ?? '') === 'Doctor') $dashUrl = 'doctor/dashboard.php';
           else if(($_SESSION['role'] ?? '') === 'Admin') $dashUrl = 'admin/dashboard.php';
         ?>
-        <a class="btn btn-outline" href="<?=$dashUrl?>">Command HUD</a>
+        <a class="btn btn-outline" href="<?=$dashUrl?>">Dashboard</a>
         <a class="btn btn-primary" href="logout.php">Sign Out</a>
       <?php else: ?>
         <a href="login.php">Sign In</a>

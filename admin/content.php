@@ -28,9 +28,53 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
 
             <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
 
-            <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px;">
+            <section style="display: grid; gap: 28px;">
+                <!-- FAQ Shards -->
+                <article class="cyber-table-wrap" style="margin: 0; width: 100%;">
+                    <p class="eyebrow">SPECIALTY FAQ ARCHIVE</p>
+                    <h3 style="margin: 0 0 16px; color: #FFF;">Specialty FAQs</h3>
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th>QUESTION & ANSWER</th>
+                                <th>SPECIALTY</th>
+                                <th>STATUS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($row = mysqli_fetch_assoc($faqRows)): ?>
+                                <tr>
+                                    <td>
+                                        <strong style="color: #FFF; display: block; margin-bottom: 4px;"><?=h($row['question'])?></strong>
+                                        <small style="color: var(--text-muted); line-height: 1.5; display: block; max-width: 760px;"><?=h($row['answer'])?></small>
+                                    </td>
+                                    <td style="font-family: var(--font-mono); color: var(--cyan-neon); font-size: 12px;"><?=h($row['specialization_name'])?></td>
+                                    <td>
+                                        <span class="status-pill status-<?=strtolower($row['status'])?>">
+                                            <?=h($row['status'])?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="post" style="display: flex; gap: 6px;">
+                                            <input type="hidden" name="action" value="set_faq_status">
+                                            <input type="hidden" name="faq_id" value="<?=$row['faq_id']?>">
+                                            <select name="status" style="padding: 4px 8px; font-size: 11px;">
+                                                <?php foreach(['Active','Inactive'] as $s): ?>
+                                                    <option <?=$row['status']===$s?'selected':''?>><?=$s?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </article>
+
                 <!-- News Shards -->
-                <article class="cyber-table-wrap" style="margin: 0;">
+                <article class="cyber-table-wrap" style="margin: 0; width: 100%;">
                     <p class="eyebrow">MEDICAL NEWS SHARDS</p>
                     <h3 style="margin: 0 0 16px; color: #FFF;">Public Medical News</h3>
                     <table class="cyber-table">
@@ -73,50 +117,6 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
                             <?php else: ?>
                                 <tr><td colspan="3" style="color: var(--text-muted); text-align: center;">No news articles registered yet.</td></tr>
                             <?php endif; ?>
-                        </tbody>
-                    </table>
-                </article>
-
-                <!-- FAQ Shards -->
-                <article class="cyber-table-wrap" style="margin: 0;">
-                    <p class="eyebrow">SPECIALTY FAQ ARCHIVE</p>
-                    <h3 style="margin: 0 0 16px; color: #FFF;">Specialty FAQs</h3>
-                    <table class="cyber-table">
-                        <thead>
-                            <tr>
-                                <th>QUESTION & ANSWER</th>
-                                <th>SPECIALTY</th>
-                                <th>STATUS</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while($row = mysqli_fetch_assoc($faqRows)): ?>
-                                <tr>
-                                    <td>
-                                        <strong style="color: #FFF; display: block; margin-bottom: 4px;"><?=h($row['question'])?></strong>
-                                        <small style="color: var(--text-muted); line-height: 1.4; display: block; max-width: 280px;"><?=h($row['answer'])?></small>
-                                    </td>
-                                    <td style="font-family: var(--font-mono); color: var(--cyan-neon); font-size: 12px;"><?=h($row['specialization_name'])?></td>
-                                    <td>
-                                        <span class="status-pill status-<?=strtolower($row['status'])?>">
-                                            <?=h($row['status'])?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <form method="post" style="display: flex; gap: 6px;">
-                                            <input type="hidden" name="action" value="set_faq_status">
-                                            <input type="hidden" name="faq_id" value="<?=$row['faq_id']?>">
-                                            <select name="status" style="padding: 4px 8px; font-size: 11px;">
-                                                <?php foreach(['Active','Inactive'] as $s): ?>
-                                                    <option <?=$row['status']===$s?'selected':''?>><?=$s?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
                         </tbody>
                     </table>
                 </article>

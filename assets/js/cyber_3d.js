@@ -28,163 +28,222 @@
     if (!container || typeof THREE === 'undefined') return;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.z = 110;
+    const camera = new THREE.PerspectiveCamera(48, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 4, 135);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Group holding the whole DNA Molecule
+    scene.add(new THREE.AmbientLight(0xffffff, 0.34));
+
+    const keyLight = new THREE.PointLight(0x9fffe0, 1.45, 220);
+    keyLight.position.set(-45, 46, 82);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.PointLight(0x22c55e, 1.1, 220);
+    rimLight.position.set(60, -28, 74);
+    scene.add(rimLight);
+
     const dnaGroup = new THREE.Group();
+    dnaGroup.position.set(28, -2, 0);
     scene.add(dnaGroup);
 
-    const cyanColor = new THREE.Color('#00F2FE');
-    const emeraldColor = new THREE.Color('#10B981');
-    const violetColor = new THREE.Color('#8B5CF6');
+    const basePairs = 38;
+    const curvePoints = 180;
+    const strandRadius = 22;
+    const helixHeight = 128;
+    const turns = 3.9;
+    const strandA = [];
+    const strandB = [];
+    const nucleotideMeshes = [];
+    const bondMeshes = [];
+    const palette = [0x22c55e, 0x14b8a6, 0x60a5fa, 0xa7f3d0];
 
-    // DNA Parameters
-    const basePairs = 48;
-    const strandRadius = 24;
-    const helixHeight = 120;
-    const turns = 3.5;
-
-    const strand1Positions = [];
-    const strand2Positions = [];
-    const bondPositions = [];
-    const strandColors = [];
-
-    // Create DNA Base Pairs & Hydrogen Bonds
-    for (let i = 0; i < basePairs; i++) {
-      const t = (i / basePairs) * turns * Math.PI * 2;
-      const y = ((i / basePairs) - 0.5) * helixHeight;
-
-      const x1 = Math.cos(t) * strandRadius;
-      const z1 = Math.sin(t) * strandRadius;
-
-      const x2 = Math.cos(t + Math.PI) * strandRadius;
-      const z2 = Math.sin(t + Math.PI) * strandRadius;
-
-      strand1Positions.push(x1, y, z1);
-      strand2Positions.push(x2, y, z2);
-
-      // Horizontal Hydrogen Bond pair line
-      bondPositions.push(x1, y, z1, x2, y, z2);
-
-      const colorMix = i / basePairs;
-      const c = cyanColor.clone().lerp(emeraldColor, colorMix);
-      strandColors.push(c.r, c.g, c.b);
-      strandColors.push(c.r, c.g, c.b);
+    function helixPoint(index, offset = 0) {
+      const progress = index / (curvePoints - 1);
+      const angle = progress * turns * Math.PI * 2 + offset;
+      const taper = 1 - Math.abs(progress - 0.5) * 0.16;
+      return new THREE.Vector3(
+        Math.cos(angle) * strandRadius * taper,
+        (progress - 0.5) * helixHeight,
+        Math.sin(angle) * strandRadius * taper
+      );
     }
 
-    // Geometry for Strand Nucleotide Nodes
-    const strand1Geo = new THREE.BufferGeometry();
-    strand1Geo.setAttribute('position', new THREE.Float32BufferAttribute(strand1Positions, 3));
+    for (let i = 0; i < curvePoints; i++) {
+      strandA.push(helixPoint(i, 0));
+      strandB.push(helixPoint(i, Math.PI));
+    }
 
-    const strand2Geo = new THREE.BufferGeometry();
-    strand2Geo.setAttribute('position', new THREE.Float32BufferAttribute(strand2Positions, 3));
-
-    // Particle Material for Nucleotide Spheres
-    const nodeMat1 = new THREE.PointsMaterial({
-      size: 4.8,
-      color: 0x00F2FE,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending
+    const strandMaterialA = new THREE.MeshStandardMaterial({
+      color: 0x34d399,
+      emissive: 0x064e3b,
+      emissiveIntensity: 0.8,
+      roughness: 0.28,
+      metalness: 0.18
     });
 
-    const nodeMat2 = new THREE.PointsMaterial({
-      size: 4.8,
-      color: 0x10B981,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending
+    const strandMaterialB = new THREE.MeshStandardMaterial({
+      color: 0x5eead4,
+      emissive: 0x0f766e,
+      emissiveIntensity: 0.7,
+      roughness: 0.3,
+      metalness: 0.16
     });
 
-    const strand1Mesh = new THREE.Points(strand1Geo, nodeMat1);
-    const strand2Mesh = new THREE.Points(strand2Geo, nodeMat2);
-    dnaGroup.add(strand1Mesh);
-    dnaGroup.add(strand2Mesh);
+    const strandTubeA = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(strandA), 220, 1.35, 14, false),
+      strandMaterialA
+    );
+    const strandTubeB = new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(strandB), 220, 1.35, 14, false),
+      strandMaterialB
+    );
+    dnaGroup.add(strandTubeA, strandTubeB);
 
-    // Hydrogen Bond Line Segments
-    const bondsGeo = new THREE.BufferGeometry();
-    bondsGeo.setAttribute('position', new THREE.Float32BufferAttribute(bondPositions, 3));
-    bondsGeo.setAttribute('color', new THREE.Float32BufferAttribute(strandColors, 3));
+    const sphereGeo = new THREE.SphereGeometry(3.15, 20, 20);
+    const cylinderGeo = new THREE.CylinderGeometry(0.52, 0.52, 1, 12);
+    const upVector = new THREE.Vector3(0, 1, 0);
 
-    const bondsMat = new THREE.LineBasicMaterial({
-      vertexColors: true,
+    function makeMaterial(color, opacity = 0.9) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.34,
+        transparent: true,
+        opacity,
+        roughness: 0.25,
+        metalness: 0.12
+      });
+    }
+
+    function createBond(start, end, color) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      const bond = new THREE.Mesh(cylinderGeo, makeMaterial(color, 0.66));
+
+      bond.scale.y = direction.length();
+      bond.position.copy(midpoint);
+      bond.quaternion.setFromUnitVectors(upVector, direction.clone().normalize());
+      bond.userData.phase = Math.random() * Math.PI * 2;
+      dnaGroup.add(bond);
+      bondMeshes.push(bond);
+    }
+
+    for (let i = 0; i < basePairs; i++) {
+      const sample = Math.floor((i / (basePairs - 1)) * (curvePoints - 1));
+      const a = strandA[sample];
+      const b = strandB[sample];
+      const colorA = palette[i % palette.length];
+      const colorB = palette[(i + 2) % palette.length];
+
+      const nodeA = new THREE.Mesh(sphereGeo, makeMaterial(colorA));
+      const nodeB = new THREE.Mesh(sphereGeo, makeMaterial(colorB));
+      nodeA.position.copy(a);
+      nodeB.position.copy(b);
+      nodeA.userData.phase = i * 0.28;
+      nodeB.userData.phase = i * 0.28 + Math.PI;
+      dnaGroup.add(nodeA, nodeB);
+      nucleotideMeshes.push(nodeA, nodeB);
+
+      createBond(a, b, i % 2 ? 0x86efac : 0x93c5fd);
+    }
+
+    const orbitGroup = new THREE.Group();
+    const orbitMat = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
       transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-      linewidth: 1.5
+      opacity: 0.18
     });
+    for (let i = 0; i < 3; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(34 + i * 7, 0.42, 12, 96), orbitMat.clone());
+      ring.rotation.x = Math.PI / 2 + i * 0.42;
+      ring.rotation.y = i * 0.58;
+      orbitGroup.add(ring);
+    }
+    dnaGroup.add(orbitGroup);
 
-    const bondsMesh = new THREE.LineSegments(bondsGeo, bondsMat);
-    dnaGroup.add(bondsMesh);
-
-    // Cardiac Health Core Sphere (Floating Bio Core)
-    const coreGeo = new THREE.IcosahedronGeometry(14, 2);
-    const coreMat = new THREE.MeshBasicMaterial({
-      color: 0x8B5CF6,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.35
-    });
-    const bioCoreMesh = new THREE.Mesh(coreGeo, coreMat);
-    dnaGroup.add(bioCoreMesh);
-
-    // Outer Floating Medical Energy Particles
-    const dustCount = 120;
+    const dustCount = 150;
     const dustGeo = new THREE.BufferGeometry();
     const dustPos = new Float32Array(dustCount * 3);
 
     for (let i = 0; i < dustCount; i++) {
-      dustPos[i * 3] = (Math.random() - 0.5) * 180;
-      dustPos[i * 3 + 1] = (Math.random() - 0.5) * 180;
-      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 180;
+      dustPos[i * 3] = (Math.random() - 0.5) * 210;
+      dustPos[i * 3 + 1] = (Math.random() - 0.5) * 150;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 130;
     }
     dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
 
     const dustMat = new THREE.PointsMaterial({
-      size: 2.5,
-      color: 0x00F2FE,
+      size: 2.2,
+      color: 0xa7f3d0,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.52,
       blending: THREE.AdditiveBlending
     });
     const dustMesh = new THREE.Points(dustGeo, dustMat);
     scene.add(dustMesh);
 
-    // Initial DNA Angle Tilt
-    dnaGroup.rotation.z = Math.PI / 6;
-    dnaGroup.rotation.x = Math.PI / 12;
+    const ecgPoints = [
+      new THREE.Vector3(-92, -54, -18),
+      new THREE.Vector3(-64, -54, -18),
+      new THREE.Vector3(-54, -41, -18),
+      new THREE.Vector3(-46, -68, -18),
+      new THREE.Vector3(-34, -54, -18),
+      new THREE.Vector3(0, -54, -18),
+      new THREE.Vector3(10, -45, -18),
+      new THREE.Vector3(18, -58, -18),
+      new THREE.Vector3(60, -54, -18),
+      new THREE.Vector3(94, -54, -18)
+    ];
+    const ecgGeo = new THREE.BufferGeometry().setFromPoints(ecgPoints);
+    const ecgLine = new THREE.Line(
+      ecgGeo,
+      new THREE.LineBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.58 })
+    );
+    scene.add(ecgLine);
 
-    // Mouse Damping Physics
+    dnaGroup.rotation.z = -0.18;
+    dnaGroup.rotation.x = 0.18;
+
     let mouseX = 0, mouseY = 0;
     let targetX = 0, targetY = 0;
+    const clock = new THREE.Clock();
 
     window.addEventListener('mousemove', (e) => {
       mouseX = (e.clientX - window.innerWidth / 2) * 0.05;
       mouseY = (e.clientY - window.innerHeight / 2) * 0.05;
     });
 
-    // Animation Loop
     function animate() {
       requestAnimationFrame(animate);
 
+      const elapsed = clock.getElapsedTime();
       targetX += (mouseX - targetX) * 0.05;
       targetY += (mouseY - targetY) * 0.05;
 
-      // DNA Rotation
-      dnaGroup.rotation.y += 0.008;
-      bioCoreMesh.rotation.x += 0.01;
-      bioCoreMesh.rotation.z += 0.005;
+      dnaGroup.rotation.y += 0.011;
+      dnaGroup.position.y = Math.sin(elapsed * 0.8) * 2.2;
+      orbitGroup.rotation.y -= 0.006;
+      orbitGroup.rotation.z += 0.004;
+      dustMesh.rotation.y -= 0.0016;
+      dustMesh.rotation.x += 0.0007;
+      ecgLine.material.opacity = 0.28 + Math.sin(elapsed * 3.5) * 0.16 + 0.16;
+      ecgLine.position.x = Math.sin(elapsed * 0.9) * 8;
 
-      dustMesh.rotation.y -= 0.001;
+      nucleotideMeshes.forEach(mesh => {
+        const pulse = 1 + Math.sin(elapsed * 3.2 + mesh.userData.phase) * 0.14;
+        mesh.scale.setScalar(pulse);
+      });
 
-      dnaGroup.rotation.x = Math.PI / 12 + targetY * 0.005;
-      dnaGroup.rotation.z = Math.PI / 6 + targetX * 0.005;
+      bondMeshes.forEach(mesh => {
+        mesh.material.opacity = 0.46 + Math.sin(elapsed * 2.6 + mesh.userData.phase) * 0.14;
+      });
+
+      dnaGroup.rotation.x = 0.18 + targetY * 0.005;
+      dnaGroup.rotation.z = -0.18 + targetX * 0.005;
 
       renderer.render(scene, camera);
     }

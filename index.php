@@ -23,27 +23,27 @@ $totalCities = (int)($cityCountRow['c'] ?? 8);
 $aptCountRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM appointments"));
 $totalAppts = (int)($aptCountRow['c'] ?? 450);
 
-$pageTitle = "Cinematic Landing Page";
+$pageTitle = "Trusted Doctor Care";
 include 'includes/header.php';
 ?>
 
-<!-- 3D WebGL Neural Background Hero Section -->
+<!-- 3D WebGL DNA Background Hero Section -->
 <section class="hero cyber-hero">
   <div id="hero-canvas-3d"></div>
   
   <div class="hero-inner">
-    <div class="eyebrow-badge">CYBERNETIC CLINICAL NEXUS</div>
-    <h1>Reimagining Healthcare as a <span>High-Tech Cinematic</span> Journey</h1>
+    <div class="eyebrow-badge">TRUSTED MEDICAL CARE NETWORK</div>
+    <h1>Find Verified Doctors for <span>Real Healthcare</span> Needs</h1>
     <p class="hero-copy">
-      Discover top verified medical specialists, explore availability flux schedules, and navigate healthcare through our holographic city network portal.
+      Book appointments with verified specialists, compare clinics by city, and manage care through a secure patient and doctor portal.
     </p>
     
     <div class="hero-actions">
       <a class="btn btn-primary" href="find_doctor.php">
-        <span>❖ Launch Doctor Discovery</span>
+        <span>Find a Doctor</span>
       </a>
       <a class="btn btn-outline" href="#hologram-network">
-        <span>View Holographic Map</span>
+        <span>View City Network</span>
       </a>
     </div>
 
@@ -55,7 +55,7 @@ include 'includes/header.php';
       </div>
       <div class="telemetry-item">
         <span class="telemetry-number" data-counter="<?=$totalCities?>">0</span>
-        <span class="telemetry-label">City Nodes</span>
+        <span class="telemetry-label">Covered Cities</span>
       </div>
       <div class="telemetry-item">
         <span class="telemetry-number" data-counter="<?=$totalPatients?>">0</span>
@@ -69,28 +69,28 @@ include 'includes/header.php';
   </div>
 </section>
 
-<!-- Holographic City Map Section -->
+<!-- City Map Section -->
 <section id="hologram-network" class="directory">
   <div class="holographic-map-section">
     <div class="holographic-map-header">
       <div>
-        <p class="eyebrow">INTERACTIVE NETWORK MATRIX</p>
-        <h2>Holographic City Node Map</h2>
+        <p class="eyebrow">INTERACTIVE CARE NETWORK</p>
+        <h2>City Doctor Availability Map</h2>
       </div>
-      <a href="find_doctor.php" class="btn btn-outline">Search All Nodes</a>
+      <a href="find_doctor.php" class="btn btn-outline">Search All Cities</a>
     </div>
     <canvas id="holographic-map-canvas"></canvas>
     <p style="color: var(--text-dim); font-size: 12px; font-family: var(--font-mono); text-align: center; margin-top: 14px;">
-      Interactive WebGL Radar: Click any city node on the grid to filter verified doctors in that metropolitan network.
+      Interactive city map: click a city node to explore verified doctors in that area.
     </p>
   </div>
 </section>
 
-<!-- Profile Shards Showcase Section -->
+<!-- Verified Doctors Showcase Section -->
 <main id="doctors" class="directory">
   <div class="section-heading">
     <div>
-      <p class="eyebrow">FEATURED CLINICAL PROFILE SHARDS</p>
+      <p class="eyebrow">FEATURED VERIFIED DOCTORS</p>
       <h2>Top Verified Doctors</h2>
     </div>
     <a class="btn btn-outline" href="find_doctor.php">Explore All Specialists</a>
@@ -121,52 +121,52 @@ include 'includes/header.php';
           </div>
 
           <a class="btn btn-outline" href="doctor_details.php?doctor_id=<?=$d['doctor_id']?>" style="width:100%">
-            View Shard Profile & Book
+            View Profile & Book
           </a>
         </article>
       <?php endwhile; ?>
     </div>
   <?php else: ?>
     <div class="empty-state">
-      <h3>No verified doctor shards active</h3>
+      <h3>No verified doctors active</h3>
       <p>Register as a doctor or login as admin to verify practitioner profiles.</p>
     </div>
   <?php endif; ?>
 </main>
 
-<!-- Cybernetic Clinical Features Grid -->
+<!-- Clinical Features Grid -->
 <section class="directory" style="padding-top: 20px;">
   <div class="section-heading">
     <div>
-      <p class="eyebrow">PLATFORM ARCHITECTURE</p>
-      <h2>Role-Based Cybernetic Interfaces</h2>
+      <p class="eyebrow">CARE PLATFORM</p>
+      <h2>Simple Tools for Patients, Doctors, and Admins</h2>
     </div>
   </div>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px;">
     <article class="profile-shard" style="padding: 32px;">
       <div class="eyebrow" style="color: var(--cyan-neon);">PATIENT DISCOVERY</div>
-      <h3 style="font-size: 22px; margin: 10px 0;">Profile Shards & Search</h3>
+      <h3 style="font-size: 22px; margin: 10px 0;">Doctor Search & Booking</h3>
       <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
-        Navigate specialists with biometric profile shards, city node filtering, and disease database guides.
+        Search verified specialists by city, specialty, consultation fee, and clinical profile details.
       </p>
       <a class="btn btn-outline" href="find_doctor.php" style="margin-top: 15px;">Access Discovery</a>
     </article>
 
     <article class="profile-shard" style="padding: 32px;">
       <div class="eyebrow" style="color: var(--emerald-bio);">DOCTOR COMMAND</div>
-      <h3 style="font-size: 22px; margin: 10px 0;">Availability Flux HUD</h3>
+      <h3 style="font-size: 22px; margin: 10px 0;">Availability & Appointments</h3>
       <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
-        Data-rich practitioner dashboard for timing flux management, slot configuration, and patient HUD queue.
+        Doctors can manage clinics, working hours, appointment requests, and patient visit status.
       </p>
       <a class="btn btn-outline" href="register.php" style="margin-top: 15px;">Doctor Login / Register</a>
     </article>
 
     <article class="profile-shard" style="padding: 32px;">
       <div class="eyebrow" style="color: var(--violet-quantum);">ADMIN NEXUS</div>
-      <h3 style="font-size: 22px; margin: 10px 0;">Centralized Oversight</h3>
+      <h3 style="font-size: 22px; margin: 10px 0;">Verification & Content Control</h3>
       <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
-        Neon data visualizations, system health telemetry rings, verification queues, and city node controls.
+        Admins can verify doctor profiles, manage users, maintain directories, FAQs, and medical news.
       </p>
       <a class="btn btn-outline" href="admin/dashboard.php" style="margin-top: 15px;">Admin Oversight</a>
     </article>
