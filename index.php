@@ -1,10 +1,21 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/directory_schema.php';
+ensureDirectorySchema($conn);
 
 function excerptText(?string $text, int $limit = 110): string
 {
     $text = trim($text ?: 'Dedicated medical professional with verified clinical credentials.');
     return strlen($text) > $limit ? substr($text, 0, $limit - 3) . '...' : $text;
+}
+
+// Fetch Active Specialty FAQs
+$homeFaqsQuery = mysqli_query($conn, "SELECT f.faq_id, f.question, f.answer, s.specialization_name FROM specialization_faqs f JOIN specializations s ON s.specialization_id=f.specialization_id WHERE f.status='Active' ORDER BY s.specialization_name ASC, f.sort_order ASC LIMIT 10");
+$homeFaqs = [];
+if ($homeFaqsQuery) {
+    while ($faq = mysqli_fetch_assoc($homeFaqsQuery)) {
+        $homeFaqs[] = $faq;
+    }
 }
 
 // Fetch Top Verified Doctors
@@ -171,6 +182,37 @@ include 'includes/header.php';
       <a class="btn btn-outline" href="admin/dashboard.php" style="margin-top: 15px;">Admin Oversight</a>
     </article>
   </div>
+</section>
+
+<!-- Active Specialty & Doctor FAQs Section -->
+<section id="faqs" class="directory" style="padding-top: 20px;">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow" style="color: var(--cyan-neon);">VERIFIED MEDICAL FAQS</p>
+      <h2>Active Specialty & Doctor FAQs</h2>
+    </div>
+    <a class="btn btn-outline" href="find_doctor.php">Explore All Specialists</a>
+  </div>
+
+  <?php if (!empty($homeFaqs)): ?>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
+      <?php foreach ($homeFaqs as $faq): ?>
+        <article class="profile-shard" style="padding: 24px;">
+          <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--cyan-neon); text-transform: uppercase; background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.25); padding: 3px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px;">
+            <?= htmlspecialchars($faq['specialization_name']) ?>
+          </span>
+          <h3 style="font-size: 17px; margin: 0 0 10px; color: #FFF; line-height: 1.4;"><?= htmlspecialchars($faq['question']) ?></h3>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin: 0;">
+            <?= htmlspecialchars($faq['answer']) ?>
+          </p>
+        </article>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?>
+    <div class="empty-state">
+      <p style="color: var(--text-muted);">No active specialty FAQs currently published.</p>
+    </div>
+  <?php endif; ?>
 </section>
 
 <?php include 'includes/footer.php'; ?>

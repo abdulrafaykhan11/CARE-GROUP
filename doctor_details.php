@@ -91,7 +91,18 @@ if (isset($_POST['book'])) {
 
 $img = 'assets/uploads/doctor/profile/' . basename($doctor['profile_image'] ?? '');
 $profileSections = doctorLongProfileSections($doctor, $clinicNames, $availability);
-$profileFaqs = doctorFaqs($doctor);
+
+$doctorSpecId = (int)($doctor['specialization_id'] ?? 0);
+$dbFaqQuery = mysqli_query($conn, "SELECT question, answer FROM specialization_faqs WHERE specialization_id = $doctorSpecId AND status = 'Active' ORDER BY sort_order ASC, faq_id ASC");
+$profileFaqs = [];
+if ($dbFaqQuery) {
+  while ($faqRow = mysqli_fetch_assoc($dbFaqQuery)) {
+    $profileFaqs[$faqRow['question']] = $faqRow['answer'];
+  }
+}
+if (empty($profileFaqs)) {
+  $profileFaqs = doctorFaqs($doctor);
+}
 
 $pageTitle = 'Dr. ' . $doctor['full_name'] . ' Profile Shard';
 include 'includes/header.php';
@@ -169,6 +180,27 @@ include 'includes/header.php';
           <?php endif; ?>
         </div>
       </section>
+
+      <?php if (!empty($profileFaqs)): ?>
+        <!-- Specialty & Practice FAQs Panel -->
+        <section class="doctor-story-panel">
+          <p class="eyebrow" style="color: var(--cyan-neon);">PATIENT CARE & PRACTICE FAQS</p>
+          <h2 style="font-size: 22px; margin-bottom: 18px; color: #FFF;">Frequently Asked Questions</h2>
+          <div class="faq-accordion" style="display: grid; gap: 12px;">
+            <?php foreach ($profileFaqs as $q => $a): ?>
+              <details style="background: rgba(4, 8, 20, 0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 14px 18px; cursor: pointer;">
+                <summary style="font-family: var(--font-heading); font-weight: 600; color: #FFF; font-size: 15px; outline: none; display: flex; justify-content: space-between; align-items: center;">
+                  <span><?= htmlspecialchars($q) ?></span>
+                  <span style="color: var(--cyan-neon); font-family: var(--font-mono); font-size: 18px;">+</span>
+                </summary>
+                <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin-top: 12px; margin-bottom: 0;">
+                  <?= htmlspecialchars($a) ?>
+                </p>
+              </details>
+            <?php endforeach; ?>
+          </div>
+        </section>
+      <?php endif; ?>
     </div>
 
     <!-- Booking Form HUD -->

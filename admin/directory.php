@@ -31,11 +31,11 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
             <?php if($msg): ?><div class="alert alert-<?=$msgType?>"><?=h($msg)?></div><?php endif; ?>
 
             <!-- Forms Grid -->
-            <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 40px;">
+            <section class="admin-nodes-grid">
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--cyan-neon);">ADD CLINIC NODE</p>
                     <h3 style="margin-top: 0; color: #FFF;">Register Clinic</h3>
-                    <form method="post" style="display: grid; gap: 14px;">
+                    <form method="post">
                         <input type="hidden" name="action" value="add_clinic">
                         <div class="field"><label>CLINIC NAME</label><input name="clinic_name" required placeholder="e.g. Care Nexus Central"></div>
                         <div class="field">
@@ -52,30 +52,30 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                             <div class="field"><label>PHONE</label><input name="phone" placeholder="0300-0000000"></div>
                             <div class="field"><label>EMAIL</label><input type="email" name="email" placeholder="clinic@domain.com"></div>
                         </div>
-                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register Clinic Node</span></button>
+                        <button class="btn btn-primary"><span>❖ Register Clinic Node</span></button>
                     </form>
                 </article>
 
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--emerald-bio);">ADD SPECIALTY</p>
                     <h3 style="margin-top: 0; color: #FFF;">Medical Specialization</h3>
-                    <form method="post" style="display: grid; gap: 14px;">
+                    <form method="post">
                         <input type="hidden" name="action" value="add_specialization">
                         <div class="field"><label>SPECIALTY NAME</label><input name="specialization_name" required placeholder="e.g. Cardiology"></div>
                         <div class="field"><label>SHORT DESCRIPTION</label><textarea name="description" rows="2" required placeholder="Brief clinical scope"></textarea></div>
                         <div class="field"><label>GUIDE OVERVIEW</label><textarea name="overview" rows="2" placeholder="In-depth specialty introduction"></textarea></div>
-                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register Specialty Shard</span></button>
+                        <button class="btn btn-primary"><span>❖ Register Specialty Shard</span></button>
                     </form>
                 </article>
 
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--violet-quantum);">ADD CITY NODE</p>
                     <h3 style="margin-top: 0; color: #FFF;">City Network Node</h3>
-                    <form method="post" style="display: grid; gap: 14px;">
+                    <form method="post">
                         <input type="hidden" name="action" value="add_city">
                         <div class="field"><label>CITY NAME</label><input name="city_name" required placeholder="e.g. Multan"></div>
                         <div class="field"><label>STATE / PROVINCE</label><input name="state" placeholder="e.g. Punjab"></div>
-                        <button class="btn btn-primary" style="margin-top: 10px;"><span>❖ Register City Node</span></button>
+                        <button class="btn btn-primary"><span>❖ Register City Node</span></button>
                     </form>
                 </article>
             </section>

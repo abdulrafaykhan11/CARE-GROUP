@@ -552,6 +552,32 @@ h1, h2, h3, h4, h5, h6 {
   transition: var(--transition);
 }
 
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+  position: relative;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.85) sepia(100%) saturate(1000%) hue-rotate(130deg);
+  opacity: 0.9;
+  padding: 4px;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: rgba(0, 242, 254, 0.2);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+}
+
 .field input:focus, .field select:focus, .field textarea:focus {
   border-color: var(--cyan-neon);
   box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
