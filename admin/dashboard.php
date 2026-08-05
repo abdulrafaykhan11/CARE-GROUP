@@ -211,5 +211,6 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
             </section>
         </main>
     </div>
+    <?php include_once __DIR__ . '/../includes/chatbot.php'; ?>
 </body>
 </html>

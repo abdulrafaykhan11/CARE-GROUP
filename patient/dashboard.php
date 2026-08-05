@@ -152,5 +152,6 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name doctor_name,s.specialization
             </section>
         </main>
     </div>
+    <?php include_once __DIR__ . '/../includes/chatbot.php'; ?>
 </body>
 </html>

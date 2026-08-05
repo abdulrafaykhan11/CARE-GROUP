@@ -1150,6 +1150,11 @@ input[type="file"]::file-selector-button {
     flex-direction: column;
     text-align: center;
   }
+  #hero-canvas-3d,
+  #holographic-map-canvas,
+  .holographic-map-section canvas {
+    display: none !important;
+  }
 }
 
 @media (max-width: 768px) {

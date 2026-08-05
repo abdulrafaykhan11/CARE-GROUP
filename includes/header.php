@@ -53,7 +53,7 @@ if (isset($conn) && $conn) {
     <nav id="siteNav">
       <a href="index.php">Home</a>
       <a href="find_doctor.php">Find Doctor</a>
-      <a href="index.php#doctors">Top Doctors</a>
+      <a href="news.php">Medical News</a>
       <a href="index.php#hologram-network">City Map</a>
       
       <?php if(!empty($_SESSION['user_id'])): ?>
