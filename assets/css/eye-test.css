@@ -40,12 +40,78 @@
   line-height: 1.7;
 }
 
+.guide-panel {
+  max-width: 1320px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.guide-copy h2 {
+  margin: 4px 0 10px;
+  font-size: 26px;
+}
+
+.guide-copy p,
+.module-help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.guide-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.guide-steps article {
+  min-height: 104px;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+}
+
+.guide-steps strong {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #FFFFFF;
+  background: var(--emerald-bio);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.guide-steps span {
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
 .eye-status-stack,
-.report-actions {
+.report-actions,
+.compact-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.compact-actions .btn {
+  min-height: 40px;
+  padding: 10px 16px;
+  white-space: nowrap;
 }
 
 .eye-badge {
@@ -220,9 +286,10 @@
 
 .control-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 190px;
+  grid-template-columns: minmax(220px, 1fr) minmax(150px, auto);
   gap: 12px;
   margin-bottom: 18px;
+  align-items: center;
 }
 
 .segmented-control {
@@ -241,6 +308,22 @@
   color: var(--text-main);
   padding: 0 14px;
   font-family: var(--font-body);
+}
+
+.eye-instruction-pill {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  border-radius: var(--radius-sm);
+  color: #047857;
+  background: rgba(5, 150, 105, 0.1);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .acuity-stage {
@@ -276,6 +359,25 @@
   transform-origin: center;
 }
 
+.answer-label {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.direction-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
 .optotype.landolt {
   border: 22px solid var(--text-main);
   border-right-color: transparent;
@@ -285,16 +387,32 @@
 
 .snellen-answer {
   width: min(160px, 100%);
+  min-height: 54px;
   text-align: center;
   font-size: 28px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
+.letter-actions {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.45fr) minmax(180px, 0.55fr);
+  gap: 10px;
+}
+
+.letter-actions .btn {
+  width: 100%;
+  min-height: 46px;
+}
+
 .direction-pad {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
+}
+
+.direction-pad.is-hidden {
+  display: none;
 }
 
 .direction-pad button:disabled {
@@ -356,6 +474,42 @@
   background: rgba(5, 150, 105, 0.12);
   border-color: rgba(5, 150, 105, 0.4);
   color: var(--emerald-bio);
+}
+
+.plate-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plate-options button {
+  min-height: 54px;
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF;
+  color: var(--text-main);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.plate-options button:hover,
+.plate-options button.is-selected {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--cyan-neon), #0EA5E9);
+  border-color: var(--cyan-neon);
+  box-shadow: var(--shadow-neon);
+}
+
+.plate-options button.cannot-see {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+
+.manual-plate-entry {
+  display: none;
 }
 
 .report-card {
@@ -436,11 +590,15 @@
 
 @media (max-width: 1020px) {
   .eye-grid,
+  .guide-panel,
   .plate-layout {
     grid-template-columns: 1fr;
   }
   .camera-panel {
     position: static;
+  }
+  .guide-steps {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -453,10 +611,12 @@
     flex-direction: column;
   }
   .eye-status-stack,
-  .report-actions {
+  .report-actions,
+  .compact-actions {
     justify-content: flex-start;
   }
   .control-row,
+  .letter-actions,
   .report-card {
     grid-template-columns: 1fr;
   }

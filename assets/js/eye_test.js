@@ -1,18 +1,21 @@
 (function () {
   const state = {
     trackingStarted: false,
+    acuityStarted: false,
     distanceCm: null,
     distanceOk: false,
     faceVisible: false,
-    currentEye: 'left',
+    currentEye: 'right',
     mode: 'tumbling',
     levelIndex: 0,
     currentAnswer: 'right',
+    challengeCursor: 1,
     currentLetter: 'E',
     missCount: 0,
     eyeScores: { left: null, right: null },
     colorAnswers: {},
     currentPlate: 0,
+    voiceActive: false,
   };
 
   const levels = [
@@ -40,6 +43,7 @@
 
   const els = {
     startTracking: $('#startTrackingBtn'),
+    stopTracking: $('#stopTrackingBtn'),
     cameraBadge: $('#cameraBadge'),
     distanceBadge: $('#distanceBadge'),
     distanceValue: $('#distanceValue'),
@@ -53,9 +57,14 @@
     feedback: $('#acuityFeedback'),
     snellenAnswer: $('#snellenAnswer'),
     mode: $('#optotypeMode'),
+    coverEyeHint: $('#coverEyeHint'),
+    checkLetter: $('#checkLetterBtn'),
+    skipLetter: $('#skipLetterBtn'),
     voice: $('#voiceControlBtn'),
+    stopVoice: $('#stopVoiceControlBtn'),
     ishihara: $('#ishiharaCanvas'),
     plateSelector: $('#plateSelector'),
+    plateOptions: $('#plateOptions'),
     plateAnswer: $('#plateAnswer'),
     plateFeedback: $('#plateFeedback'),
     submitPlate: $('#submitPlateBtn'),
@@ -70,6 +79,7 @@
   let faceMesh = null;
   let camera = null;
   let ctx = null;
+  let recognition = null;
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -81,19 +91,22 @@
     el.classList.toggle('is-danger', tone === 'danger');
   }
 
+  function setFeedback(text) {
+    if (els.feedback) {
+      els.feedback.textContent = text;
+    }
+  }
+
   function testPaused() {
-    return state.trackingStarted && (!state.faceVisible || !state.distanceOk);
+    return false;
   }
 
   function updateControlLock() {
     const locked = testPaused();
-    $$('.direction-pad button').forEach(button => button.disabled = locked || state.mode === 'snellen');
+    $$('.direction-pad button').forEach(button => button.disabled = locked);
     els.startAcuity.disabled = locked;
-    if (locked) {
-      els.feedback.querySelector('span').textContent = state.faceVisible
-        ? 'Paused: Too close. Please move back to ~40-50 cm.'
-        : 'Paused: keep your face visible in the camera frame.';
-    }
+    if (els.checkLetter) els.checkLetter.disabled = locked;
+    if (els.skipLetter) els.skipLetter.disabled = locked;
   }
 
   function updateDistance(distanceCm, faceVisible) {
@@ -103,7 +116,7 @@
 
     if (!faceVisible) {
       els.distanceValue.textContent = '-- cm';
-      els.distanceText.textContent = 'Face not detected. Re-center in the camera frame.';
+      els.distanceText.textContent = 'Face not detected. You can still continue the test manually.';
       els.distanceFill.style.width = '0%';
       setBadge(els.distanceBadge, 'Face not detected', 'warning');
       updateControlLock();
@@ -114,13 +127,13 @@
     els.distanceFill.style.width = clamp((distanceCm / 60) * 100, 0, 100) + '%';
 
     if (distanceCm < 38) {
-      els.distanceText.textContent = 'Too Close! Please move back to ~40-50 cm.';
-      setBadge(els.distanceBadge, 'Too close - test paused', 'danger');
+      els.distanceText.textContent = 'Too close. Move back a little, but the test will keep working.';
+      setBadge(els.distanceBadge, 'Too close', 'danger');
     } else if (state.distanceOk) {
-      els.distanceText.textContent = 'Optimal Distance Maintained. Ready for Test.';
-      setBadge(els.distanceBadge, 'Optimal distance maintained', 'success');
+      els.distanceText.textContent = 'Good distance. You can continue the test.';
+      setBadge(els.distanceBadge, 'Good distance', 'success');
     } else {
-      els.distanceText.textContent = 'Move slightly closer for the most reliable screen distance.';
+      els.distanceText.textContent = 'Move slightly closer for a better distance check.';
       setBadge(els.distanceBadge, 'Adjust distance', 'warning');
     }
 
@@ -197,16 +210,47 @@
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         els.video.srcObject = stream;
         updateDistance(45, true);
-        els.distanceText.textContent = 'Tracking library unavailable. Manual distance mode is active.';
+        els.distanceText.textContent = 'Camera preview is active. Keep the screen about one arm away.';
       }
 
-      els.startTracking.textContent = 'Tracking Active';
+      els.startTracking.textContent = 'Camera Active';
+      els.startTracking.disabled = true;
+      els.stopTracking.disabled = false;
       setBadge(els.cameraBadge, 'Camera active', 'success');
     } catch (error) {
       state.trackingStarted = false;
       setBadge(els.cameraBadge, 'Camera blocked', 'danger');
       els.distanceText.textContent = 'Camera permission was denied or no camera was found.';
     }
+  }
+
+  function stopTracking() {
+    if (camera && typeof camera.stop === 'function') {
+      camera.stop();
+    }
+    if (els.video.srcObject) {
+      els.video.srcObject.getTracks().forEach(track => track.stop());
+      els.video.srcObject = null;
+    }
+    if (faceMesh && typeof faceMesh.close === 'function') {
+      faceMesh.close();
+    }
+    camera = null;
+    faceMesh = null;
+    state.trackingStarted = false;
+    state.distanceCm = null;
+    state.distanceOk = false;
+    state.faceVisible = false;
+    els.distanceValue.textContent = '-- cm';
+    els.distanceFill.style.width = '0%';
+    els.distanceText.textContent = 'Camera stopped. You can continue the test manually.';
+    if (ctx) ctx.clearRect(0, 0, els.canvas.width, els.canvas.height);
+    els.startTracking.textContent = 'Start Camera';
+    els.startTracking.disabled = false;
+    els.stopTracking.disabled = true;
+    setBadge(els.cameraBadge, 'Camera stopped', 'warning');
+    setBadge(els.distanceBadge, 'Manual mode', 'warning');
+    updateControlLock();
   }
 
   function renderOptotype() {
@@ -224,23 +268,25 @@
       els.optotype.classList.add('landolt');
       els.optotype.style.borderWidth = Math.max(8, Math.round(size * 0.16)) + 'px';
       els.optotype.style.transform = 'rotate(' + rotations[state.currentAnswer] + 'deg)';
-      els.snellenAnswer.hidden = true;
+      if (els.snellenAnswer) els.snellenAnswer.hidden = true;
     } else if (state.mode === 'snellen') {
       els.optotype.textContent = state.currentLetter;
       els.optotype.style.transform = 'rotate(0deg)';
-      els.snellenAnswer.hidden = false;
-      els.snellenAnswer.value = '';
-      els.snellenAnswer.focus({ preventScroll: true });
-      els.feedback.querySelector('span').textContent = 'Type the visible letter and press Enter.';
+      if (els.snellenAnswer) {
+        els.snellenAnswer.hidden = false;
+        els.snellenAnswer.value = '';
+        els.snellenAnswer.focus({ preventScroll: true });
+      }
     } else {
       els.optotype.textContent = 'E';
       els.optotype.style.transform = 'rotate(' + rotations[state.currentAnswer] + 'deg)';
-      els.snellenAnswer.hidden = true;
+      if (els.snellenAnswer) els.snellenAnswer.hidden = true;
     }
   }
 
   function nextChallenge() {
-    state.currentAnswer = directions[Math.floor(Math.random() * directions.length)];
+    state.currentAnswer = directions[state.challengeCursor % directions.length];
+    state.challengeCursor += 1;
     state.currentLetter = snellenLetters[Math.floor(Math.random() * snellenLetters.length)];
     renderOptotype();
   }
@@ -250,10 +296,13 @@
       updateControlLock();
       return;
     }
+    state.acuityStarted = true;
     state.levelIndex = 0;
     state.missCount = 0;
+    state.challengeCursor = directions.indexOf(state.currentAnswer) + 1;
     nextChallenge();
-    els.feedback.querySelector('span').textContent = 'Test started for ' + state.currentEye + ' eye.';
+    updateEyeHint();
+    setFeedback('Test started for ' + readableEyeName() + '. Press the direction where the E is facing.');
   }
 
   function scoreForCurrentProgress() {
@@ -262,14 +311,20 @@
   }
 
   function answerAcuity(answer) {
+    if (!state.acuityStarted) {
+      state.acuityStarted = true;
+      state.missCount = 0;
+    }
     if (testPaused()) {
       updateControlLock();
       return;
     }
 
     let correct = false;
-    if (state.mode === 'snellen') {
-      correct = String(els.snellenAnswer.value || '').trim().toUpperCase() === state.currentLetter;
+    if (answer === 'skip') {
+      correct = false;
+    } else if (state.mode === 'snellen') {
+      correct = String((els.snellenAnswer && els.snellenAnswer.value) || '').trim().toUpperCase() === state.currentLetter;
     } else {
       correct = answer === state.currentAnswer;
     }
@@ -278,24 +333,37 @@
       state.missCount = 0;
       if (state.levelIndex < levels.length - 1) {
         state.levelIndex += 1;
-        els.feedback.querySelector('span').textContent = 'Correct. Advancing to ' + levels[state.levelIndex].label + '.';
+        setFeedback('Correct. Now choose the new direction.');
         nextChallenge();
       } else {
         state.eyeScores[state.currentEye] = levels[state.levelIndex].label;
-        els.feedback.querySelector('span').textContent = 'Completed: ' + state.currentEye + ' eye estimated at ' + levels[state.levelIndex].label + '.';
+        state.acuityStarted = false;
+        setFeedback('Done: ' + readableEyeName() + ' result is about ' + levels[state.levelIndex].label + '. Switch eyes and repeat.');
+        nextChallenge();
         updateReport();
       }
     } else {
       state.missCount += 1;
       if (state.missCount >= 2) {
         state.eyeScores[state.currentEye] = scoreForCurrentProgress();
-        els.feedback.querySelector('span').textContent = 'Threshold reached: ' + state.currentEye + ' eye estimated at ' + state.eyeScores[state.currentEye] + '.';
+        state.acuityStarted = false;
+        setFeedback('Done: ' + readableEyeName() + ' result is about ' + state.eyeScores[state.currentEye] + '. Switch eyes and repeat.');
+        nextChallenge();
         updateReport();
       } else {
-        els.feedback.querySelector('span').textContent = 'Missed. One more attempt at this level.';
+        setFeedback('No problem. Try one more direction at this size.');
         nextChallenge();
       }
     }
+  }
+
+  function readableEyeName() {
+    return state.currentEye === 'right' ? 'right eye' : 'left eye';
+  }
+
+  function updateEyeHint() {
+    if (!els.coverEyeHint) return;
+    els.coverEyeHint.textContent = state.currentEye === 'right' ? 'Cover left eye' : 'Cover right eye';
   }
 
   function seedRandom(seed) {
@@ -343,17 +411,54 @@
 
     state.currentPlate = index;
     els.plateAnswer.value = '';
+    renderPlateOptions(index);
     $$('#plateSelector button').forEach((button, buttonIndex) => button.classList.toggle('is-active', buttonIndex === index));
+  }
+
+  function renderPlateOptions(index) {
+    const expected = plates[index].expected;
+    const choicesByPlate = [
+      ['12', '13', '17'],
+      ['8', '3', '6'],
+      ['29', '70', '21'],
+      ['5', '2', '6'],
+    ];
+    els.plateOptions.innerHTML = '';
+    choicesByPlate[index].forEach(choice => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = choice;
+      button.addEventListener('click', () => {
+        els.plateAnswer.value = choice;
+        submitPlate();
+      });
+      els.plateOptions.appendChild(button);
+    });
+    const cannotSee = document.createElement('button');
+    cannotSee.type = 'button';
+    cannotSee.className = 'cannot-see';
+    cannotSee.textContent = 'I cannot see it';
+    cannotSee.addEventListener('click', () => {
+      els.plateAnswer.value = '';
+      submitPlate();
+    });
+    els.plateOptions.appendChild(cannotSee);
   }
 
   function submitPlate() {
     const plate = plates[state.currentPlate];
     const answer = String(els.plateAnswer.value || '').trim();
     state.colorAnswers[state.currentPlate] = answer === plate.expected;
-    els.plateFeedback.textContent = state.colorAnswers[state.currentPlate] ? 'Correct plate response.' : 'Response recorded for screening summary.';
+    els.plateFeedback.textContent = state.colorAnswers[state.currentPlate]
+      ? 'Correct. Moving to the next color plate.'
+      : 'Answer recorded. Moving to the next color plate.';
     updateColorScore();
     const next = (state.currentPlate + 1) % plates.length;
-    setTimeout(() => drawPlate(next), 450);
+    if (Object.keys(state.colorAnswers).length >= plates.length) {
+      els.plateFeedback.textContent += ' Color test complete. Open Result to see the summary.';
+    } else {
+      setTimeout(() => drawPlate(next), 650);
+    }
   }
 
   function updateColorScore() {
@@ -389,29 +494,94 @@
     URL.revokeObjectURL(url);
   }
 
+  function spokenDirection(text) {
+    const value = String(text || '').toLowerCase();
+    const words = {
+      up: ['up', 'upar', 'oper', 'upper'],
+      down: ['down', 'neeche', 'niche', 'neechay'],
+      left: ['left', 'baen', 'baayen'],
+      right: ['right', 'daen', 'daayen'],
+    };
+    return directions.find(direction => words[direction].some(word => value.includes(word)));
+  }
+
   function startVoiceControl() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      els.feedback.querySelector('span').textContent = 'Voice control is not supported in this browser.';
+      setFeedback('Voice is not supported in this browser. Use Chrome or Edge, or use the direction buttons.');
       return;
     }
-    const recognition = new SpeechRecognition();
+    stopVoiceControl(false);
+    state.voiceActive = true;
+    recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
     recognition.interimResults = false;
+    recognition.continuous = true;
     recognition.onresult = event => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
-      const match = directions.find(direction => transcript.includes(direction));
+      const latest = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      const match = spokenDirection(latest);
       if (match) answerAcuity(match);
+      else setFeedback('Voice heard "' + latest + '". Say up, down, left, or right.');
     };
-    recognition.onerror = () => {
-      els.feedback.querySelector('span').textContent = 'Voice input was not available.';
+    recognition.onerror = event => {
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setFeedback('Microphone permission is blocked. Allow microphone access or use the direction buttons.');
+        stopVoiceControl(false);
+        return;
+      }
+      setFeedback('Voice did not catch that. Say up, down, left, or right.');
     };
-    recognition.start();
-    els.feedback.querySelector('span').textContent = 'Listening for up, down, left, or right.';
+    recognition.onend = () => {
+      if (!state.voiceActive) {
+        els.voice.textContent = 'Start Voice';
+        els.voice.disabled = false;
+        els.stopVoice.disabled = true;
+        return;
+      }
+      setTimeout(() => {
+        if (!state.voiceActive || !recognition) return;
+        try {
+          recognition.start();
+        } catch (error) {
+          state.voiceActive = false;
+          els.voice.textContent = 'Start Voice';
+          els.voice.disabled = false;
+          els.stopVoice.disabled = true;
+        }
+      }, 250);
+    };
+    try {
+      recognition.start();
+      els.voice.textContent = 'Voice Active';
+      els.voice.disabled = true;
+      els.stopVoice.disabled = false;
+      setFeedback('Listening. Say up, down, left, right, upar, or neeche.');
+    } catch (error) {
+      state.voiceActive = false;
+      setFeedback('Voice could not start. Use the direction buttons.');
+    }
+  }
+
+  function stopVoiceControl(showMessage = true) {
+    state.voiceActive = false;
+    if (recognition) {
+      recognition.onend = null;
+      try {
+        recognition.stop();
+      } catch (error) {}
+      recognition = null;
+    }
+    els.voice.textContent = 'Start Voice';
+    els.voice.disabled = false;
+    els.stopVoice.disabled = true;
+    if (showMessage) {
+      setFeedback('Voice stopped. You can use the direction buttons manually.');
+    }
   }
 
   function wireEvents() {
     els.startTracking.addEventListener('click', startTracking);
+    els.stopTracking.addEventListener('click', stopTracking);
     els.startAcuity.addEventListener('click', startAcuity);
     els.mode.addEventListener('change', event => {
       state.mode = event.target.value;
@@ -422,10 +592,13 @@
       button.addEventListener('click', () => {
         state.currentEye = button.dataset.eye;
         $$('.segmented-control [data-eye]').forEach(item => item.classList.toggle('is-active', item === button));
+        updateEyeHint();
         startAcuity();
       });
     });
     $$('.direction-pad [data-answer]').forEach(button => button.addEventListener('click', () => answerAcuity(button.dataset.answer)));
+    if (els.checkLetter) els.checkLetter.addEventListener('click', () => answerAcuity('snellen'));
+    if (els.skipLetter) els.skipLetter.addEventListener('click', () => answerAcuity('skip'));
     document.addEventListener('keydown', event => {
       const keyMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'enter' };
       if (!keyMap[event.key]) return;
@@ -436,13 +609,16 @@
         answerAcuity(keyMap[event.key]);
       }
     });
-    els.snellenAnswer.addEventListener('keydown', event => {
-      if (event.key === 'Enter') {
-        event.stopPropagation();
-        answerAcuity('snellen');
-      }
-    });
+    if (els.snellenAnswer) {
+      els.snellenAnswer.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.stopPropagation();
+          answerAcuity('snellen');
+        }
+      });
+    }
     els.voice.addEventListener('click', startVoiceControl);
+    els.stopVoice.addEventListener('click', () => stopVoiceControl(true));
     $$('.tab-button').forEach(button => {
       button.addEventListener('click', () => {
         $$('.tab-button').forEach(item => item.classList.toggle('is-active', item === button));
@@ -457,6 +633,10 @@
       window.print();
     });
     els.downloadReport.addEventListener('click', downloadReport);
+    window.addEventListener('beforeunload', () => {
+      stopVoiceControl(false);
+      stopTracking();
+    });
   }
 
   function initPlates() {
@@ -475,6 +655,7 @@
     wireEvents();
     initPlates();
     nextChallenge();
+    updateEyeHint();
     updateControlLock();
     updateReport();
   });
