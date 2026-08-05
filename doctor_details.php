@@ -1,8 +1,10 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/availability_schema.php';
+require_once 'config/appointment_schema.php';
 require_once 'config/content_templates.php';
 ensureClinicAvailabilitySchema($conn);
+ensureAppointmentChangeSchema($conn);
 
 if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Patient') {
   header('Location: login.php');
@@ -49,6 +51,8 @@ if (isset($_POST['book'])) {
   $reason = trim($_POST['reason'] ?? $_POST['reason_dropdown'] ?? '');
   $notes = trim($_POST['notes'] ?? '');
   $valid = false;
+  $symptomPhotoPath = null;
+  $photoError = null;
 
   foreach ($availability as $a) {
     if ($a['clinic_id'] == $clinic && date('l', strtotime($date)) === $a['day'] && $time >= $a['start_time'] && $time < $a['end_time']) {
@@ -62,14 +66,18 @@ if (isset($_POST['book'])) {
   } elseif ($reason === '') {
     $msg = '<div class="alert alert-error">Please select or enter your visit reason.</div>';
   } else {
+    [$symptomPhotoPath, $photoError] = saveAppointmentSymptomPhoto($_FILES, $_POST, __DIR__);
+    if ($photoError) {
+      $msg = '<div class="alert alert-error">' . htmlspecialchars($photoError) . '</div>';
+    } else {
     $safeDate = mysqli_real_escape_string($conn, $date);
     $safeTime = mysqli_real_escape_string($conn, $time);
     $exists = mysqli_query($conn, "SELECT appointment_id FROM appointments WHERE doctor_id=$doctorId AND appointment_date='$safeDate' AND appointment_time='$safeTime' AND status NOT IN ('Cancelled','NoShow')");
     if (mysqli_num_rows($exists)) {
       $msg = '<div class="alert alert-error">This slot was just booked by another patient. Choose another time slot.</div>';
     } else {
-      $stmt = mysqli_prepare($conn, 'INSERT INTO appointments (doctor_id,patient_id,clinic_id,appointment_date,appointment_time,reason,notes) VALUES (?,?,?,?,?,?,?)');
-      mysqli_stmt_bind_param($stmt, 'iiissss', $doctorId, $patient['patient_id'], $clinic, $date, $time, $reason, $notes);
+      $stmt = mysqli_prepare($conn, 'INSERT INTO appointments (doctor_id,patient_id,clinic_id,appointment_date,appointment_time,reason,notes,symptom_photo_path) VALUES (?,?,?,?,?,?,?,?)');
+      mysqli_stmt_bind_param($stmt, 'iiisssss', $doctorId, $patient['patient_id'], $clinic, $date, $time, $reason, $notes, $symptomPhotoPath);
       if (mysqli_stmt_execute($stmt)) {
         require_once 'config/mail.php';
         $clinicName = '';
@@ -85,6 +93,7 @@ if (isset($_POST['book'])) {
       } else {
         $msg = '<div class="alert alert-error">Transmission failed. Could not register appointment.</div>';
       }
+    }
     }
   }
 }
@@ -209,7 +218,7 @@ include 'includes/header.php';
       <h2 style="font-size: 24px; margin-bottom: 16px;">Schedule Visit</h2>
       <?= $msg ?>
       
-      <form method="post" style="display: grid; gap: 16px;">
+      <form method="post" enctype="multipart/form-data" style="display: grid; gap: 16px;">
         <div class="field">
           <label>SELECT CLINIC NODE</label>
           <select name="clinic_id" id="clinic" required>
@@ -255,6 +264,46 @@ include 'includes/header.php';
           <textarea name="notes" rows="3" placeholder="Share symptoms or prior records..."></textarea>
         </div>
 
+        <section class="symptom-capture" data-symptom-capture>
+          <div>
+            <p class="eyebrow" style="margin-bottom: 10px;">ATTACH SYMPTOM PHOTO (OPTIONAL)</p>
+            <p style="margin: 0 0 14px; color: var(--text-muted); font-size: 13px; line-height: 1.6;">Add a clear photo of a visible symptom so the doctor can review it before your visit.</p>
+          </div>
+
+          <div class="symptom-choice-grid">
+            <button type="button" class="symptom-choice" data-capture-mode="camera">Capture via Webcam</button>
+            <button type="button" class="symptom-choice" data-capture-mode="upload">Upload Image File</button>
+          </div>
+
+          <div class="symptom-panel" id="cameraPanel" hidden>
+            <video id="symptomVideo" class="symptom-video" autoplay playsinline muted></video>
+            <canvas id="symptomCanvas" hidden></canvas>
+            <div class="symptom-actions">
+              <button type="button" class="btn btn-primary" id="snapPhotoBtn">Snap Photo</button>
+              <button type="button" class="btn btn-outline" id="stopCameraBtn">Close Camera</button>
+            </div>
+            <p class="form-hint" id="cameraStatus">Camera preview will appear here after permission is granted.</p>
+          </div>
+
+          <div class="symptom-panel" id="uploadPanel" hidden>
+            <div class="field">
+              <label>UPLOAD IMAGE FILE</label>
+              <input type="file" name="symptom_photo" id="symptomFile" accept="image/jpeg,image/png,image/webp">
+            </div>
+            <p class="form-hint">Accepted formats: JPG, PNG, WEBP. Maximum size: 5MB.</p>
+          </div>
+
+          <figure class="symptom-preview" id="symptomPreviewWrap" hidden>
+            <img id="symptomPreview" alt="Selected symptom preview">
+            <figcaption>
+              <span id="symptomPreviewLabel">Photo ready</span>
+              <button type="button" class="btn btn-outline" id="retakePhotoBtn">Retake</button>
+            </figcaption>
+          </figure>
+
+          <input type="hidden" name="symptom_photo_data" id="symptomPhotoData">
+        </section>
+
         <button class="btn btn-primary" name="book" style="width:100%; margin-top: 10px;">
           <span>❖ Transmit Booking Request</span>
         </button>
@@ -295,6 +344,119 @@ include 'includes/header.php';
     o.required = other;
     if (!other) o.value = '';
   });
+
+  const symptomCapture = (() => {
+    const root = document.querySelector('[data-symptom-capture]');
+    if (!root) return;
+    const cameraPanel = document.querySelector('#cameraPanel');
+    const uploadPanel = document.querySelector('#uploadPanel');
+    const video = document.querySelector('#symptomVideo');
+    const canvas = document.querySelector('#symptomCanvas');
+    const status = document.querySelector('#cameraStatus');
+    const dataInput = document.querySelector('#symptomPhotoData');
+    const fileInput = document.querySelector('#symptomFile');
+    const previewWrap = document.querySelector('#symptomPreviewWrap');
+    const preview = document.querySelector('#symptomPreview');
+    const previewLabel = document.querySelector('#symptomPreviewLabel');
+    const choices = root.querySelectorAll('[data-capture-mode]');
+    let stream = null;
+    let currentMode = '';
+
+    const setStatus = message => {
+      if (status) status.textContent = message;
+    };
+
+    const stopCamera = () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (video) video.srcObject = null;
+    };
+
+    const showPreview = (src, label) => {
+      preview.src = src;
+      previewLabel.textContent = label;
+      previewWrap.hidden = false;
+    };
+
+    const clearPreview = () => {
+      preview.removeAttribute('src');
+      previewWrap.hidden = true;
+      dataInput.value = '';
+      if (fileInput) fileInput.value = '';
+    };
+
+    const setMode = async mode => {
+      currentMode = mode;
+      choices.forEach(btn => btn.classList.toggle('is-active', btn.dataset.captureMode === mode));
+      cameraPanel.hidden = mode !== 'camera';
+      uploadPanel.hidden = mode !== 'upload';
+      clearPreview();
+
+      if (mode === 'camera') {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setStatus('Your browser does not support webcam capture. Please upload an image file.');
+          return;
+        }
+        try {
+          stopCamera();
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+          video.srcObject = stream;
+          setStatus('Camera ready. Frame the visible symptom clearly, then snap a photo.');
+        } catch (error) {
+          setStatus('Camera permission was blocked or unavailable. You can still upload an image file.');
+        }
+      } else {
+        stopCamera();
+      }
+    };
+
+    choices.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.captureMode)));
+
+    document.querySelector('#snapPhotoBtn').addEventListener('click', () => {
+      if (!stream || !video.videoWidth) {
+        setStatus('Camera is not ready yet.');
+        return;
+      }
+      const maxWidth = 900;
+      const ratio = Math.min(1, maxWidth / video.videoWidth);
+      canvas.width = Math.round(video.videoWidth * ratio);
+      canvas.height = Math.round(video.videoHeight * ratio);
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.86);
+      dataInput.value = dataUrl;
+      if (fileInput) fileInput.value = '';
+      showPreview(dataUrl, 'Captured photo ready for doctor review');
+      stopCamera();
+      setStatus('Snapshot captured. Use Retake if you want another photo.');
+    });
+
+    document.querySelector('#stopCameraBtn').addEventListener('click', stopCamera);
+    document.querySelector('#retakePhotoBtn').addEventListener('click', () => setMode(currentMode || 'camera'));
+
+    if (fileInput) {
+      fileInput.addEventListener('change', event => {
+        dataInput.value = '';
+        const file = event.target.files && event.target.files[0];
+        if (!file) {
+          clearPreview();
+          return;
+        }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+          fileInput.setCustomValidity('Please choose a JPG, PNG, or WEBP image under 5MB.');
+          fileInput.reportValidity();
+          clearPreview();
+          fileInput.setCustomValidity('');
+          return;
+        }
+        fileInput.setCustomValidity('');
+        showPreview(URL.createObjectURL(file), 'Uploaded image ready for doctor review');
+      });
+    }
+
+    window.addEventListener('beforeunload', stopCamera);
+  })();
 </script>
 
 <?php include 'includes/footer.php'; ?>

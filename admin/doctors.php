@@ -77,5 +77,6 @@ $doctors = mysqli_query($conn, "SELECT d.*,u.full_name,u.email,u.phone,u.status 
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

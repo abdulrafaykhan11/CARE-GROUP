@@ -17,6 +17,9 @@ ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS rescheduled_by ENUM('Patient','Doctor') NULL AFTER reschedule_reason,
   ADD COLUMN IF NOT EXISTS rescheduled_at TIMESTAMP NULL AFTER rescheduled_by;
 
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS symptom_photo_path VARCHAR(255) NULL AFTER notes;
+
 CREATE TABLE IF NOT EXISTS specialization_guides (
   guide_id INT AUTO_INCREMENT PRIMARY KEY,
   specialization_id INT NOT NULL UNIQUE,

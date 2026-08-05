@@ -177,5 +177,6 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

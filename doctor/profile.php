@@ -248,5 +248,6 @@ if (!empty($raw_img)) {
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

@@ -242,5 +242,6 @@ $myClinics = mysqli_query($conn, "SELECT dc.is_primary,cl.clinic_name,c.city_nam
         clinicSelect.addEventListener('change', toggleOtherClinic);
         toggleOtherClinic();
     </script>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

@@ -208,5 +208,6 @@ $img = !empty($patient['profile_image']) ? '../' . $patient['profile_image'] : '
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

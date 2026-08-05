@@ -141,5 +141,6 @@ $appointmentsCount = oneCount($conn, "SELECT COUNT(*) total FROM appointments WH
             </div>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

@@ -94,5 +94,6 @@ $users = mysqli_query($conn, "SELECT user_id,full_name,email,phone,role,status,c
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

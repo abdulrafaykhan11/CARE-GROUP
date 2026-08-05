@@ -98,6 +98,9 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,u.phone,c.clini
                             <div>
                                 <b><?=date('h:i A', strtotime($a['appointment_time']))?></b>
                                 <p><?=htmlspecialchars($a['reason'])?></p>
+                                <?php if(!empty($a['symptom_photo_path'])): ?>
+                                    <a class="appointment-photo-link" href="../<?=htmlspecialchars($a['symptom_photo_path'])?>" target="_blank" rel="noopener">View Symptom Photo</a>
+                                <?php endif; ?>
                             </div>
                             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
                                 <span class="status status-<?=$a['status']?>"><?=$a['status']?></span>
@@ -128,5 +131,6 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,u.phone,c.clini
             <?php endif; ?>
         </section>
     </main>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

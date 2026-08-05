@@ -90,6 +90,7 @@
 
   <!-- 3D WebGL & GSAP Engine Script -->
   <script src="assets/js/cyber_3d.js"></script>
+  <script src="assets/js/live_validation.js"></script>
 
   <!-- CARE MediBot AI Chatbot Integration -->
   <?php include_once __DIR__ . '/chatbot.php'; ?>

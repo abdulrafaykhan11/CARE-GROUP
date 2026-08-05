@@ -123,5 +123,6 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

@@ -149,7 +149,12 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name F
                                         <?php endif; ?>
                                     </td>
                                     <td style="color: var(--text-muted);"><?=htmlspecialchars($a['clinic_name'])?></td>
-                                    <td><?=htmlspecialchars($a['reason'])?></td>
+                                    <td>
+                                        <?=htmlspecialchars($a['reason'])?>
+                                        <?php if(!empty($a['symptom_photo_path'])): ?>
+                                            <a class="appointment-photo-link" href="../<?=htmlspecialchars($a['symptom_photo_path'])?>" target="_blank" rel="noopener">View Symptom Photo</a>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <span class="status-pill status-<?=strtolower($a['status'])?>">
                                             <?=$a['status']?>
@@ -186,5 +191,6 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name F
         </main>
     </div>
     <?php include_once __DIR__ . '/../includes/chatbot.php'; ?>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

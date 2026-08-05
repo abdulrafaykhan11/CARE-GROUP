@@ -1,11 +1,13 @@
 <?php
 require_once __DIR__ . '/_admin.php';
+require_once __DIR__ . '/../config/appointment_schema.php';
+ensureAppointmentChangeSchema($conn);
 [$msg, $msgType] = adminFlashFromPost($conn, $adminId);
 
 $status = $_GET['status'] ?? '';
 $valid = ['Pending','Confirmed','Completed','Cancelled','NoShow'];
 $where = in_array($status, $valid, true) ? "WHERE a.status='".mysqli_real_escape_string($conn, $status)."'" : '';
-$appointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment_date,a.appointment_time,a.status,a.reason,a.reschedule_reason,a.rescheduled_by,u_doc.full_name doctor_name,u_pat.full_name patient_name,cl.clinic_name FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id JOIN users u_doc ON u_doc.user_id=d.user_id JOIN patients p ON p.patient_id=a.patient_id JOIN users u_pat ON u_pat.user_id=p.user_id JOIN clinics cl ON cl.clinic_id=a.clinic_id $where ORDER BY a.appointment_date DESC,a.appointment_time DESC");
+$appointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment_date,a.appointment_time,a.status,a.reason,a.symptom_photo_path,a.reschedule_reason,a.rescheduled_by,u_doc.full_name doctor_name,u_pat.full_name patient_name,cl.clinic_name FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id JOIN users u_doc ON u_doc.user_id=d.user_id JOIN patients p ON p.patient_id=a.patient_id JOIN users u_pat ON u_pat.user_id=p.user_id JOIN clinics cl ON cl.clinic_id=a.clinic_id $where ORDER BY a.appointment_date DESC,a.appointment_time DESC");
 $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.start_time,da.end_time,da.slot_duration,da.status,u.full_name doctor_name,cl.clinic_name FROM doctor_availability da JOIN doctors d ON d.doctor_id=da.doctor_id JOIN users u ON u.user_id=d.user_id LEFT JOIN clinics cl ON cl.clinic_id=da.clinic_id ORDER BY da.updated_at DESC, da.availability_id DESC");
 ?>
 <!doctype html>
@@ -67,6 +69,9 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
                                 <td><?=h($a['clinic_name'])?></td>
                                 <td>
                                     <?=h($a['reason'])?>
+                                    <?php if(!empty($a['symptom_photo_path'])): ?>
+                                        <a class="appointment-photo-link" href="../<?=h($a['symptom_photo_path'])?>" target="_blank" rel="noopener">View Symptom Photo</a>
+                                    <?php endif; ?>
                                     <?php if(!empty($a['reschedule_reason'])): ?>
                                         <div style="color: var(--rose-danger); font-size: 11px; margin-top: 4px;">
                                             Changed by <?=h($a['rescheduled_by'])?>: <?=h($a['reschedule_reason'])?>
@@ -140,5 +145,6 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
             </section>
         </main>
     </div>
+    <script src="../assets/js/live_validation.js"></script>
 </body>
 </html>

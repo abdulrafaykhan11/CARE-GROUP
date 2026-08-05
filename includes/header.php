@@ -28,6 +28,11 @@ if (isset($conn) && $conn) {
   <!-- Stylesheets -->
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/dashboard.css">
+  <?php if (!empty($extraStylesheets) && is_array($extraStylesheets)): ?>
+    <?php foreach ($extraStylesheets as $stylesheet): ?>
+      <link rel="stylesheet" href="<?=htmlspecialchars($stylesheet)?>">
+    <?php endforeach; ?>
+  <?php endif; ?>
   
   <!-- Three.js & GSAP 3 CDNs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -53,6 +58,7 @@ if (isset($conn) && $conn) {
     <nav id="siteNav">
       <a href="index.php">Home</a>
       <a href="find_doctor.php">Find Doctor</a>
+      <a href="eye-test.php">Eye Test</a>
       <a href="news.php">Medical News</a>
       <a href="index.php#hologram-network">City Map</a>
       
