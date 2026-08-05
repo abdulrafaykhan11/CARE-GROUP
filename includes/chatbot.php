@@ -21,7 +21,6 @@
 
 <!-- Glassmorphic Chat Widget Window -->
 <div id="care-chat-window" role="dialog" aria-label="CARE MediBot AI Assistant Window">
-  <!-- Header -->
   <div class="care-chat-header">
     <div class="care-chat-header-info">
       <div class="care-chat-avatar-wrapper">
@@ -51,24 +50,19 @@
     </div>
   </div>
 
-  <!-- Quick Action Chips -->
   <div class="care-chat-chips-wrap">
-    <button class="care-chat-chip" data-prompt="Find verified doctors in Karachi">🩺 Find Doctors</button>
-    <button class="care-chat-chip" data-prompt="How do I book an appointment on CARE Nexus?">📅 How to Book</button>
-    <button class="care-chat-chip" data-prompt="What are the 24/7 emergency contact numbers?">🚨 Emergency</button>
-    <button class="care-chat-chip" data-prompt="What should I do for a sudden high fever?">💊 Symptom Advice</button>
+    <button class="care-chat-chip" data-prompt="Find verified doctors in Karachi">Find Doctors</button>
+    <button class="care-chat-chip" data-prompt="How do I book an appointment on CARE Nexus?">How to Book</button>
+    <button class="care-chat-chip" data-prompt="What should I do in a medical emergency?">Emergency</button>
+    <button class="care-chat-chip" data-prompt="What should I do for a sudden high fever?">Symptom Advice</button>
   </div>
 
-  <!-- Messages Body -->
-  <div class="care-chat-body" id="care-chat-messages">
-    <!-- Messages injected dynamically by assets/js/chatbot.js -->
-  </div>
+  <div class="care-chat-body" id="care-chat-messages"></div>
 
-  <!-- Footer Input Controls -->
   <div class="care-chat-footer">
     <div class="care-chat-input-wrapper">
       <input type="text" id="care-chat-input-text" class="care-chat-input" placeholder="Ask about health, doctors, or booking..." autocomplete="off">
-      <button id="care-chat-mic" class="care-chat-mic-btn" title="Voice Input (Dictate Query)">
+      <button id="care-chat-mic" class="care-chat-mic-btn" title="Voice Input">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
           <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>

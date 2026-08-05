@@ -1,6 +1,7 @@
 <?php
 require_once 'config/db.php';
 require_once 'config/appointment_schema.php';
+require_once 'config/mail.php';
 ensureAppointmentChangeSchema($conn);
 
 if(empty($_SESSION['user_id'])){
@@ -100,6 +101,7 @@ if(isset($_POST['update_appointment'])){
                     $app['rescheduled_by'] = $role;
                     $app['rescheduled_at'] = date('Y-m-d H:i:s');
                 }
+                sendAppointmentUpdatedEmail($conn, $aid, $role, $changeReason);
             } else {
                 $msg = '<div class="alert alert-error">Could not save changes. Try again.</div>';
             }
@@ -291,4 +293,3 @@ include 'includes/header.php';
 </script>
 
 <?php include 'includes/footer.php'; ?>
-

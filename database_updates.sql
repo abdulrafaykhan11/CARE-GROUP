@@ -20,6 +20,15 @@ ALTER TABLE appointments
 ALTER TABLE appointments
   ADD COLUMN IF NOT EXISTS symptom_photo_path VARCHAR(255) NULL AFTER notes;
 
+ALTER TABLE appointments
+  ADD COLUMN IF NOT EXISTS payment_method ENUM('Cash','Card') NULL AFTER status,
+  ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP NULL AFTER payment_method;
+
+UPDATE appointments
+SET payment_method='Cash',
+    completed_at=COALESCE(completed_at, updated_at, created_at)
+WHERE status='Completed' AND payment_method IS NULL;
+
 CREATE TABLE IF NOT EXISTS specialization_guides (
   guide_id INT AUTO_INCREMENT PRIMARY KEY,
   specialization_id INT NOT NULL UNIQUE,

@@ -7,7 +7,7 @@ ensureAppointmentChangeSchema($conn);
 $status = $_GET['status'] ?? '';
 $valid = ['Pending','Confirmed','Completed','Cancelled','NoShow'];
 $where = in_array($status, $valid, true) ? "WHERE a.status='".mysqli_real_escape_string($conn, $status)."'" : '';
-$appointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment_date,a.appointment_time,a.status,a.reason,a.symptom_photo_path,a.reschedule_reason,a.rescheduled_by,u_doc.full_name doctor_name,u_pat.full_name patient_name,cl.clinic_name FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id JOIN users u_doc ON u_doc.user_id=d.user_id JOIN patients p ON p.patient_id=a.patient_id JOIN users u_pat ON u_pat.user_id=p.user_id JOIN clinics cl ON cl.clinic_id=a.clinic_id $where ORDER BY a.appointment_date DESC,a.appointment_time DESC");
+$appointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment_date,a.appointment_time,a.status,a.reason,a.symptom_photo_path,a.reschedule_reason,a.rescheduled_by,a.payment_method,d.consultation_fee,u_doc.full_name doctor_name,u_pat.full_name patient_name,cl.clinic_name FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id JOIN users u_doc ON u_doc.user_id=d.user_id JOIN patients p ON p.patient_id=a.patient_id JOIN users u_pat ON u_pat.user_id=p.user_id JOIN clinics cl ON cl.clinic_id=a.clinic_id $where ORDER BY a.appointment_date DESC,a.appointment_time DESC");
 $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.start_time,da.end_time,da.slot_duration,da.status,u.full_name doctor_name,cl.clinic_name FROM doctor_availability da JOIN doctors d ON d.doctor_id=da.doctor_id JOIN users u ON u.user_id=d.user_id LEFT JOIN clinics cl ON cl.clinic_id=da.clinic_id ORDER BY da.updated_at DESC, da.availability_id DESC");
 ?>
 <!doctype html>
@@ -80,14 +80,25 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
                                 </td>
                                 <td>
                                     <span class="status-pill status-<?=strtolower($a['status'])?>"><?=h($a['status'])?></span>
+                                    <?php if($a['status'] === 'Completed'): ?>
+                                        <small style="display:block;color:var(--emerald-bio);font-family:var(--font-mono);margin-top:6px;">
+                                            PKR <?=number_format((float)$a['consultation_fee'])?> / <?=h($a['payment_method'] ?: 'Cash')?>
+                                        </small>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
-                                    <form method="post" style="display: flex; gap: 6px;">
+                                    <form method="post" class="appointment-status-form" style="display: flex; gap: 6px; flex-wrap: wrap;">
                                         <input type="hidden" name="action" value="set_appointment_status">
                                         <input type="hidden" name="appointment_id" value="<?=$a['appointment_id']?>">
-                                        <select name="status" style="padding: 4px 8px; font-size: 11px;">
+                                        <select name="status" class="appointment-status-select" style="padding: 4px 8px; font-size: 11px;">
                                             <?php foreach($valid as $s): ?>
                                                 <option <?=$a['status']===$s?'selected':''?>><?=$s?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                        <select name="payment_method" class="payment-method-select" style="padding: 4px 8px; font-size: 11px; <?=$a['status']==='Completed'?'':'display:none;'?>" <?=$a['status']==='Completed'?'required':''?>>
+                                            <option value="">Payment?</option>
+                                            <?php foreach(['Cash','Card'] as $method): ?>
+                                                <option value="<?=$method?>" <?=$a['payment_method']===$method?'selected':''?>><?=$method?></option>
                                             <?php endforeach; ?>
                                         </select>
                                         <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px;">Save</button>
@@ -146,5 +157,20 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
         </main>
     </div>
     <script src="../assets/js/live_validation.js"></script>
+    <script>
+        document.querySelectorAll('.appointment-status-form').forEach(form => {
+            const status = form.querySelector('.appointment-status-select');
+            const payment = form.querySelector('.payment-method-select');
+            if (!status || !payment) return;
+            function syncPayment() {
+                const completing = status.value === 'Completed';
+                payment.style.display = completing ? 'inline-block' : 'none';
+                payment.required = completing;
+                if (!completing) payment.value = '';
+            }
+            status.addEventListener('change', syncPayment);
+            syncPayment();
+        });
+    </script>
 </body>
 </html>

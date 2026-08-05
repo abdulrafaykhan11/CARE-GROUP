@@ -113,7 +113,7 @@ include 'includes/header.php';
             <h2>Choose the number you see</h2>
             <p class="module-help">Look at the circle, then tap the matching number. If no number is clear, choose "I cannot see it".</p>
           </div>
-          <span class="eye-badge" id="colorScoreBadge">0 / 0</span>
+          <span class="eye-badge" id="colorScoreBadge">0 / 4 recorded</span>
         </div>
 
         <div class="plate-layout">
@@ -157,6 +157,53 @@ include 'includes/header.php';
             <strong id="colorVisionScore">Not tested</strong>
           </div>
           <p>This is only a simple screening. For glasses, eye pain, sudden blur, or color-vision concerns, consult an optometrist or eye doctor.</p>
+        </div>
+
+        <div class="report-detail-grid" id="reportDetailGrid">
+          <article class="report-section">
+            <span class="micro-label">PERFORMANCE NOTES</span>
+            <h3>What needs attention</h3>
+            <ul id="mistakeList">
+              <li>Complete the test to see a detailed review.</li>
+            </ul>
+          </article>
+
+          <article class="report-section">
+            <span class="micro-label">TIME TRACKING</span>
+            <h3>Response timing</h3>
+            <div class="timing-grid">
+              <div><span>Total time</span><strong id="totalTimeValue">--</strong></div>
+              <div><span>Average answer</span><strong id="averageTimeValue">--</strong></div>
+              <div><span>Slowest answer</span><strong id="slowestTimeValue">--</strong></div>
+            </div>
+          </article>
+
+          <article class="report-section">
+            <span class="micro-label">EYE CARE PLAN</span>
+            <h3>Exercises</h3>
+            <ul id="exerciseList"></ul>
+          </article>
+
+          <article class="report-section">
+            <span class="micro-label">FOOD SUPPORT</span>
+            <h3>Diet suggestions</h3>
+            <ul id="dietList"></ul>
+          </article>
+
+          <article class="report-section report-section-wide">
+            <span class="micro-label">DAILY HABITS</span>
+            <h3>What to do and avoid</h3>
+            <div class="dos-grid">
+              <div>
+                <h4>Do</h4>
+                <ul id="doList"></ul>
+              </div>
+              <div>
+                <h4>Do not</h4>
+                <ul id="dontList"></ul>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </section>

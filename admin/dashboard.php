@@ -28,6 +28,20 @@ $r = mysqli_query($conn, "SELECT DAYNAME(appointment_date) day_name, COUNT(*) to
 while ($row = mysqli_fetch_assoc($r)) {
     $weekdays[$row['day_name']] = (int) $row['total'];
 }
+
+$paymentRevenue = ['Cash' => 0, 'Card' => 0];
+$r = mysqli_query($conn, "SELECT COALESCE(a.payment_method,'Cash') payment_method, COALESCE(SUM(d.consultation_fee),0) total FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id WHERE a.status='Completed' GROUP BY COALESCE(a.payment_method,'Cash')");
+while ($row = mysqli_fetch_assoc($r)) {
+    $paymentRevenue[$row['payment_method']] = (float) $row['total'];
+}
+
+$monthlyRevenue = [];
+$r = mysqli_query($conn, "SELECT DATE_FORMAT(COALESCE(a.completed_at,a.updated_at,a.created_at),'%b %Y') month_label, COALESCE(SUM(d.consultation_fee),0) total FROM appointments a JOIN doctors d ON d.doctor_id=a.doctor_id WHERE a.status='Completed' GROUP BY YEAR(COALESCE(a.completed_at,a.updated_at,a.created_at)), MONTH(COALESCE(a.completed_at,a.updated_at,a.created_at)), month_label ORDER BY YEAR(COALESCE(a.completed_at,a.updated_at,a.created_at)), MONTH(COALESCE(a.completed_at,a.updated_at,a.created_at)) LIMIT 12");
+while ($row = mysqli_fetch_assoc($r)) {
+    $monthlyRevenue[$row['month_label']] = (float) $row['total'];
+}
+$maxRevenue = max($monthlyRevenue ? max($monthlyRevenue) : 0, 1);
+
 $maxWeekday = max(max($weekdays), 1);
 $totalAppointments = max(1, (int) $stats['appointments_total']);
 $completionRate = round(((int) ($appointmentStatus['Completed'] ?? 0) / $totalAppointments) * 100);
@@ -96,6 +110,12 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                     <span class="subtext" style="color: var(--cyan-neon);">❖ <?=$stats['appointments_pending']?> pending review</span>
                 </a>
 
+                <a class="hud-metric" href="appointments.php?status=Completed" style="border-color: rgba(5, 150, 105, 0.4);">
+                    <label>TOTAL REVENUE</label>
+                    <div class="value" style="color: var(--emerald-bio); font-size: clamp(24px, 3vw, 34px);">PKR <?=number_format((float)$stats['completed_value'])?></div>
+                    <span class="subtext" style="color: var(--emerald-bio);">Completed appointments only</span>
+                </a>
+
                 <a class="hud-metric" href="directory.php">
                     <label>DIRECTORY NETWORK</label>
                     <div class="value" style="color: var(--emerald-bio);"><?=$stats['clinics_active']?></div>
@@ -137,7 +157,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                         </div>
                         <span style="font-family: var(--font-mono); color: var(--emerald-bio); font-size: 12px; font-weight: 700;"><?=$completionRate?>% COMPLETE</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 180px; align-items: end;">
+                    <div class="weekday-chart" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 180px; align-items: end;">
                         <?php foreach($weekdays as $day => $value):
                             $height = max(12, round(($value / $maxWeekday) * 100));
                         ?>
@@ -148,6 +168,60 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                             </div>
                         <?php endforeach; ?>
                     </div>
+                </article>
+            </section>
+
+            <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; margin-bottom: 36px;">
+                <article class="cyber-table-wrap" style="margin:0;">
+                    <div class="section-heading" style="margin-bottom: 20px;">
+                        <div>
+                            <p class="eyebrow">REVENUE FLOW</p>
+                            <h3 style="margin:0; font-size: 20px; color: var(--text-main);">Cash vs Card</h3>
+                        </div>
+                        <span style="font-family: var(--font-mono); color: var(--emerald-bio); font-size: 12px; font-weight: 700;">PKR <?=number_format((float)$stats['completed_value'])?></span>
+                    </div>
+                    <?php
+                        $totalRevenue = max((float)$stats['completed_value'], 1);
+                        foreach(['Cash','Card'] as $method):
+                            $amount = (float)($paymentRevenue[$method] ?? 0);
+                            $width = $amount > 0 ? max(8, round(($amount / $totalRevenue) * 100)) : 0;
+                    ?>
+                        <div style="display:grid;grid-template-columns:70px 1fr 120px;gap:12px;align-items:center;margin-bottom:14px;font-family:var(--font-mono);font-size:12px;">
+                            <span style="color:var(--text-muted);"><?=$method?></span>
+                            <div style="height:12px;background:rgba(226,232,240,0.9);border-radius:999px;overflow:hidden;">
+                                <div style="width:<?=$width?>%;height:100%;background:linear-gradient(90deg,var(--emerald-bio),var(--cyan-neon));"></div>
+                            </div>
+                            <b style="color:var(--text-main);text-align:right;">PKR <?=number_format($amount)?></b>
+                        </div>
+                    <?php endforeach; ?>
+                </article>
+
+                <article class="cyber-table-wrap" style="margin:0;">
+                    <div class="section-heading" style="margin-bottom: 20px;">
+                        <div>
+                            <p class="eyebrow">REVENUE CHART</p>
+                            <h3 style="margin:0; font-size: 20px; color: var(--text-main);">Completed Revenue</h3>
+                        </div>
+                        <span style="font-family: var(--font-mono); color: var(--cyan-neon); font-size: 12px; font-weight: 700;"><?=count($monthlyRevenue)?> MONTHS</span>
+                    </div>
+                    <?php if($monthlyRevenue): ?>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:12px;height:220px;align-items:end;">
+                            <?php foreach($monthlyRevenue as $month => $amount):
+                                $height = max(12, round(($amount / $maxRevenue) * 100));
+                            ?>
+                                <div style="height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px;">
+                                    <b style="font-family:var(--font-mono);font-size:11px;color:var(--text-main);">PKR <?=number_format($amount)?></b>
+                                    <div title="<?=h($month)?> revenue" style="width:100%;height:<?=$height?>%;background:linear-gradient(180deg,var(--emerald-bio),var(--cyan-neon));border-radius:5px 5px 2px 2px;"></div>
+                                    <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);text-align:center;"><?=h($month)?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="empty-state" style="padding: 30px;">
+                            <h4 style="margin:0;color:var(--text-main);">No completed revenue yet</h4>
+                            <p style="margin:6px 0 0;font-size:13px;">Revenue appears after an appointment is completed with Cash or Card payment.</p>
+                        </div>
+                    <?php endif; ?>
                 </article>
             </section>
 

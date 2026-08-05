@@ -88,7 +88,7 @@ if (isset($_POST['book'])) {
           }
         }
         $pemail = mysqli_fetch_assoc(mysqli_query($conn, "SELECT email FROM users WHERE user_id=$uid"))['email'];
-        $mailOk = sendAppointmentEmail(['patient_email' => $pemail, 'patient_name' => $_SESSION['full_name'], 'doctor_email' => $doctor['email'], 'doctor_name' => $doctor['full_name'], 'date' => date('d M Y', strtotime($date)), 'time' => date('h:i A', strtotime($time)), 'clinic' => $clinicName]);
+        $mailOk = sendAppointmentEmail(['patient_email' => $pemail, 'patient_name' => $_SESSION['full_name'], 'doctor_email' => $doctor['email'], 'doctor_name' => $doctor['full_name'], 'date' => date('d M Y', strtotime($date)), 'time' => date('h:i A', strtotime($time)), 'clinic' => $clinicName, 'admin_recipients' => adminRecipients($conn)]);
         $msg = '<div class="alert alert-success">Appointment request transmitted successfully.' . ($mailOk ? ' Confirmation email dispatched.' : '') . '</div>';
       } else {
         $msg = '<div class="alert alert-error">Transmission failed. Could not register appointment.</div>';

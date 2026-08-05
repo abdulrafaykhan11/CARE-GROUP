@@ -24,9 +24,52 @@
     return '';
   }
 
+  function applyCustomValidations(control) {
+    control.setCustomValidity(''); 
+    if (!control.value) return; 
+
+    const name = (control.name || '').toLowerCase();
+    const type = control.type;
+    const value = control.value;
+
+    if (name.includes('name') && value.trim().length < 3) {
+      control.setCustomValidity('Name must be at least 3 characters long.');
+    }
+
+    if ((name.includes('phone') || type === 'tel') && value) {
+      const phoneRegex = /^((\+92)|(0092)|(0))?3[0-9]{2}[-?\s]?[0-9]{7}$/;
+      if (!phoneRegex.test(value)) {
+        control.setCustomValidity('Enter a valid Pakistani phone number (e.g. +923001234567 or 03001234567).');
+      }
+    }
+
+    if ((name.includes('email') || type === 'email') && value) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(value)) {
+        control.setCustomValidity('Enter a valid email address.');
+      }
+    }
+
+    if (name.includes('cnic') && value) {
+      const cnicRegex = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+      if (!cnicRegex.test(value)) {
+        control.setCustomValidity('Enter a valid CNIC format (e.g. 42101-1234567-1).');
+      }
+    }
+
+    if (name.includes('pmdc') && value) {
+      const pmdcRegex = /^[0-9]{4,7}-[A-Za-z]{1}$/;
+      if (!pmdcRegex.test(value)) {
+        control.setCustomValidity('Enter a valid PMDC format (e.g. 12345-P).');
+      }
+    }
+  }
+
   function validateControl(control, showEmpty) {
     const field = control.closest('.field');
     if (!field || control.disabled || control.readOnly) return true;
+
+    applyCustomValidations(control);
 
     const hasValue = control.type === 'file'
       ? Boolean(control.files && control.files.length)

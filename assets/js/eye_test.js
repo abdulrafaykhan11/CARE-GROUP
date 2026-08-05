@@ -14,7 +14,13 @@
     missCount: 0,
     eyeScores: { left: null, right: null },
     colorAnswers: {},
+    acuityAttempts: [],
+    colorAttempts: [],
+    testStartedAt: null,
+    acuityChallengeStartedAt: null,
+    colorPlateStartedAt: null,
     currentPlate: 0,
+    colorLocked: false,
     voiceActive: false,
   };
 
@@ -72,6 +78,14 @@
     leftScore: $('#leftAcuityScore'),
     rightScore: $('#rightAcuityScore'),
     colorVisionScore: $('#colorVisionScore'),
+    mistakeList: $('#mistakeList'),
+    totalTime: $('#totalTimeValue'),
+    averageTime: $('#averageTimeValue'),
+    slowestTime: $('#slowestTimeValue'),
+    exerciseList: $('#exerciseList'),
+    dietList: $('#dietList'),
+    doList: $('#doList'),
+    dontList: $('#dontList'),
     downloadReport: $('#downloadReportBtn'),
     printReport: $('#printReportBtn'),
   };
@@ -95,6 +109,44 @@
     if (els.feedback) {
       els.feedback.textContent = text;
     }
+  }
+
+  function ensureTestTimer() {
+    if (!state.testStartedAt) {
+      state.testStartedAt = Date.now();
+    }
+  }
+
+  function elapsedSince(startedAt) {
+    return startedAt ? Date.now() - startedAt : 0;
+  }
+
+  function formatDuration(ms) {
+    if (!ms) return '--';
+    if (ms < 1000) return Math.max(1, Math.round(ms)) + ' ms';
+    const seconds = ms / 1000;
+    if (seconds < 60) return seconds.toFixed(seconds >= 10 ? 0 : 1) + ' sec';
+    const minutes = Math.floor(seconds / 60);
+    const rest = Math.round(seconds % 60);
+    return minutes + ' min ' + rest + ' sec';
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function readableDirection(value) {
+    const labels = { up: 'Up', right: 'Right', down: 'Down', left: 'Left', skip: 'Skipped', snellen: 'Typed letter' };
+    return labels[value] || String(value || 'No answer');
+  }
+
+  function readableAnswer(value) {
+    return value ? escapeHtml(value) : 'I cannot see it';
   }
 
   function testPaused() {
@@ -289,6 +341,7 @@
     state.challengeCursor += 1;
     state.currentLetter = snellenLetters[Math.floor(Math.random() * snellenLetters.length)];
     renderOptotype();
+    state.acuityChallengeStartedAt = Date.now();
   }
 
   function startAcuity() {
@@ -296,24 +349,38 @@
       updateControlLock();
       return;
     }
+    ensureTestTimer();
     state.acuityStarted = true;
     state.levelIndex = 0;
     state.missCount = 0;
+    state.eyeScores[state.currentEye] = null;
+    state.acuityAttempts = state.acuityAttempts.filter(item => item.eye !== state.currentEye);
     state.challengeCursor = directions.indexOf(state.currentAnswer) + 1;
     nextChallenge();
     updateEyeHint();
-    setFeedback('Test started for ' + readableEyeName() + '. Press the direction where the E is facing.');
+    updateReport();
+    setFeedback('Test started for ' + readableEyeName() + '. Your answers are being recorded for the final report.');
   }
 
   function scoreForCurrentProgress() {
-    const index = clamp(state.levelIndex - (state.missCount ? 1 : 0), 0, levels.length - 1);
-    return levels[index].label;
+    const eyeAttempts = state.acuityAttempts.filter(item => item.eye === state.currentEye && item.correct);
+    if (!eyeAttempts.length) return 'Below 20/200';
+    return eyeAttempts[eyeAttempts.length - 1].level;
+  }
+
+  function finishCurrentEye() {
+    state.eyeScores[state.currentEye] = scoreForCurrentProgress();
+    state.acuityStarted = false;
+    setFeedback('Done: ' + readableEyeName() + ' test is recorded. Switch eyes and repeat, then open Result.');
+    updateReport();
   }
 
   function answerAcuity(answer) {
+    ensureTestTimer();
     if (!state.acuityStarted) {
       state.acuityStarted = true;
       state.missCount = 0;
+      state.acuityChallengeStartedAt = state.acuityChallengeStartedAt || Date.now();
     }
     if (testPaused()) {
       updateControlLock();
@@ -329,31 +396,26 @@
       correct = answer === state.currentAnswer;
     }
 
-    if (correct) {
-      state.missCount = 0;
-      if (state.levelIndex < levels.length - 1) {
-        state.levelIndex += 1;
-        setFeedback('Correct. Now choose the new direction.');
-        nextChallenge();
-      } else {
-        state.eyeScores[state.currentEye] = levels[state.levelIndex].label;
-        state.acuityStarted = false;
-        setFeedback('Done: ' + readableEyeName() + ' result is about ' + levels[state.levelIndex].label + '. Switch eyes and repeat.');
-        nextChallenge();
-        updateReport();
-      }
+    state.acuityAttempts.push({
+      eye: state.currentEye,
+      level: levels[state.levelIndex].label,
+      expected: state.mode === 'snellen' ? state.currentLetter : state.currentAnswer,
+      answer: state.mode === 'snellen' ? String((els.snellenAnswer && els.snellenAnswer.value) || '').trim().toUpperCase() : answer,
+      correct,
+      timeMs: elapsedSince(state.acuityChallengeStartedAt),
+      mode: state.mode,
+      recordedAt: new Date().toISOString(),
+    });
+
+    state.missCount = correct ? 0 : state.missCount + 1;
+
+    if (state.levelIndex < levels.length - 1) {
+      state.levelIndex += 1;
+      setFeedback('Answer recorded. Continue with the next direction.');
+      nextChallenge();
     } else {
-      state.missCount += 1;
-      if (state.missCount >= 2) {
-        state.eyeScores[state.currentEye] = scoreForCurrentProgress();
-        state.acuityStarted = false;
-        setFeedback('Done: ' + readableEyeName() + ' result is about ' + state.eyeScores[state.currentEye] + '. Switch eyes and repeat.');
-        nextChallenge();
-        updateReport();
-      } else {
-        setFeedback('No problem. Try one more direction at this size.');
-        nextChallenge();
-      }
+      finishCurrentEye();
+      nextChallenge();
     }
   }
 
@@ -410,9 +472,39 @@
     }
 
     state.currentPlate = index;
+    state.colorLocked = false;
+    state.colorPlateStartedAt = Date.now();
     els.plateAnswer.value = '';
+    els.plateFeedback.textContent = 'Select the number you can see in the colored circle.';
     renderPlateOptions(index);
     $$('#plateSelector button').forEach((button, buttonIndex) => button.classList.toggle('is-active', buttonIndex === index));
+    if (Object.prototype.hasOwnProperty.call(state.colorAnswers, index)) {
+      const attempt = state.colorAttempts.find(item => item.plateIndex === index);
+      const recordedAnswer = attempt ? attempt.answer : '';
+      $$('#plateOptions button').forEach(button => {
+        const isCannotSee = button.classList.contains('cannot-see');
+        const selected = isCannotSee ? recordedAnswer === '' : button.textContent === recordedAnswer;
+        button.classList.toggle('is-selected', selected);
+      });
+      els.plateFeedback.textContent = 'This plate is already recorded. Continue with any unanswered plate or open Result.';
+      setPlateControlsLocked(true);
+    }
+  }
+
+  function nextUnansweredPlate() {
+    for (let i = 1; i <= plates.length; i++) {
+      const next = (state.currentPlate + i) % plates.length;
+      if (!Object.prototype.hasOwnProperty.call(state.colorAnswers, next)) {
+        return next;
+      }
+    }
+    return null;
+  }
+
+  function setPlateControlsLocked(locked) {
+    state.colorLocked = locked;
+    $$('#plateOptions button').forEach(button => button.disabled = locked);
+    if (els.submitPlate) els.submitPlate.disabled = locked;
   }
 
   function renderPlateOptions(index) {
@@ -446,16 +538,33 @@
   }
 
   function submitPlate() {
+    if (state.colorLocked) return;
+    ensureTestTimer();
     const plate = plates[state.currentPlate];
     const answer = String(els.plateAnswer.value || '').trim();
-    state.colorAnswers[state.currentPlate] = answer === plate.expected;
-    els.plateFeedback.textContent = state.colorAnswers[state.currentPlate]
-      ? 'Correct. Moving to the next color plate.'
-      : 'Answer recorded. Moving to the next color plate.';
+    const correct = answer === plate.expected;
+    state.colorAnswers[state.currentPlate] = correct;
+    state.colorAttempts = state.colorAttempts.filter(item => item.plateIndex !== state.currentPlate);
+    state.colorAttempts.push({
+      plateIndex: state.currentPlate,
+      plateNumber: state.currentPlate + 1,
+      expected: plate.expected,
+      answer,
+      correct,
+      timeMs: elapsedSince(state.colorPlateStartedAt),
+      recordedAt: new Date().toISOString(),
+    });
+    $$('#plateOptions button').forEach(button => {
+      const isCannotSee = button.classList.contains('cannot-see');
+      const selected = isCannotSee ? answer === '' : button.textContent === answer;
+      button.classList.toggle('is-selected', selected);
+    });
+    setPlateControlsLocked(true);
+    els.plateFeedback.textContent = 'Answer recorded. Moving to the next color plate.';
     updateColorScore();
-    const next = (state.currentPlate + 1) % plates.length;
-    if (Object.keys(state.colorAnswers).length >= plates.length) {
-      els.plateFeedback.textContent += ' Color test complete. Open Result to see the summary.';
+    const next = nextUnansweredPlate();
+    if (next === null) {
+      els.plateFeedback.textContent = 'Color test complete. Open Result to see the final report.';
     } else {
       setTimeout(() => drawPlate(next), 650);
     }
@@ -464,8 +573,101 @@
   function updateColorScore() {
     const answered = Object.keys(state.colorAnswers).length;
     const correct = Object.values(state.colorAnswers).filter(Boolean).length;
-    els.colorScore.textContent = correct + ' / ' + answered;
+    els.colorScore.textContent = answered + ' / ' + plates.length + ' recorded';
     updateReport();
+  }
+
+  function collectTimingStats() {
+    const allTimes = state.acuityAttempts.concat(state.colorAttempts)
+      .map(item => item.timeMs)
+      .filter(time => Number.isFinite(time) && time > 0);
+    const total = state.testStartedAt ? Date.now() - state.testStartedAt : 0;
+    const average = allTimes.length ? allTimes.reduce((sum, time) => sum + time, 0) / allTimes.length : 0;
+    const slowest = allTimes.length ? Math.max(...allTimes) : 0;
+    return { total, average, slowest, count: allTimes.length };
+  }
+
+  function reportSummary() {
+    const answered = Object.keys(state.colorAnswers).length;
+    const colorCorrect = Object.values(state.colorAnswers).filter(Boolean).length;
+    const acuityWrong = state.acuityAttempts.filter(item => !item.correct);
+    const colorWrong = state.colorAttempts.filter(item => !item.correct);
+    return {
+      answered,
+      colorCorrect,
+      acuityWrong,
+      colorWrong,
+      totalWrong: acuityWrong.length + colorWrong.length,
+    };
+  }
+
+  function renderList(el, items) {
+    if (!el) return;
+    el.innerHTML = '';
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.innerHTML = item;
+      el.appendChild(li);
+    });
+  }
+
+  function recommendationItems(summary) {
+    const needsDoctor = summary.totalWrong >= 3 || (summary.answered === plates.length && summary.colorCorrect < plates.length - 1);
+    const exercises = [
+      'Use the 20-20-20 rule: every 20 minutes, look 20 feet away for 20 seconds.',
+      'Blink slowly 10 times after long screen use to reduce dryness.',
+      'Do gentle near-far focus: look at your thumb, then a distant object, repeat 10 times.',
+      'Rest your eyes in normal room light; avoid doing exercises if you feel pain or dizziness.',
+    ];
+    const diet = [
+      'Eat leafy greens such as spinach, kale, and saag for lutein and zeaxanthin.',
+      'Add carrots, sweet potatoes, eggs, citrus fruit, nuts, and seeds in balanced portions.',
+      'Choose omega-3 sources such as fish, walnuts, flaxseed, or chia seeds.',
+      'Drink enough water, especially if your eyes feel dry during screen work.',
+    ];
+    const dos = [
+      'Keep the screen about one arm away and slightly below eye level.',
+      'Use good room lighting and reduce glare on the screen.',
+      'Book an eye checkup if blur, headaches, eye pain, or sudden vision changes happen.',
+      needsDoctor ? 'Share this report with an optometrist for a proper clinical test.' : 'Repeat this screening later in the same lighting if you want to compare progress.',
+    ];
+    const donts = [
+      'Do not use this screening as a glasses prescription.',
+      'Do not rub your eyes hard, especially when they feel irritated.',
+      'Do not ignore sudden blur, flashes, eye pain, or loss of vision.',
+      'Do not stare at bright screens for long sessions without breaks.',
+    ];
+    return { exercises, diet, dos, donts };
+  }
+
+  function buildMistakeItems() {
+    const items = [];
+    const acuityWrong = state.acuityAttempts.filter(item => !item.correct);
+    acuityWrong.forEach(item => {
+      items.push(
+        '<strong>' + readableEyeNameFromValue(item.eye) + ' at ' + escapeHtml(item.level) + '</strong>: expected ' +
+        escapeHtml(readableDirection(item.expected)) + ', answered ' + escapeHtml(readableDirection(item.answer)) +
+        ' in ' + escapeHtml(formatDuration(item.timeMs)) + '.'
+      );
+    });
+    const colorWrong = state.colorAttempts.filter(item => !item.correct);
+    colorWrong.forEach(item => {
+      items.push(
+        '<strong>Color plate ' + item.plateNumber + '</strong>: expected ' + escapeHtml(item.expected) +
+        ', answered ' + readableAnswer(item.answer) + ' in ' + escapeHtml(formatDuration(item.timeMs)) + '.'
+      );
+    });
+    if (!items.length) {
+      if (!state.acuityAttempts.length && !state.colorAttempts.length) {
+        return ['Complete the test to see a detailed review.'];
+      }
+      return ['No wrong answers were recorded in the completed parts of this screening.'];
+    }
+    return items;
+  }
+
+  function readableEyeNameFromValue(eye) {
+    return eye === 'right' ? 'Right eye' : 'Left eye';
   }
 
   function updateReport() {
@@ -474,17 +676,39 @@
     const answered = Object.keys(state.colorAnswers).length;
     const correct = Object.values(state.colorAnswers).filter(Boolean).length;
     els.colorVisionScore.textContent = answered ? correct + ' / ' + answered + ' plates' : 'Not tested';
+    const timings = collectTimingStats();
+    if (els.totalTime) els.totalTime.textContent = formatDuration(timings.total);
+    if (els.averageTime) els.averageTime.textContent = formatDuration(timings.average);
+    if (els.slowestTime) els.slowestTime.textContent = formatDuration(timings.slowest);
+
+    const summary = reportSummary();
+    const recommendations = recommendationItems(summary);
+    renderList(els.mistakeList, buildMistakeItems());
+    renderList(els.exerciseList, recommendations.exercises.map(escapeHtml));
+    renderList(els.dietList, recommendations.diet.map(escapeHtml));
+    renderList(els.doList, recommendations.dos.map(escapeHtml));
+    renderList(els.dontList, recommendations.donts.map(escapeHtml));
   }
 
   function downloadReport() {
     updateReport();
-    const html = '<!doctype html><meta charset="utf-8"><title>CARE Vision Screening Report</title>' +
-      '<style>body{font-family:Arial,sans-serif;padding:28px;color:#0f172a}strong{font-size:24px;display:block;margin:6px 0 18px}</style>' +
-      '<h1>CARE Vision Screening Report</h1>' +
-      '<p>Left Eye</p><strong>' + els.leftScore.textContent + '</strong>' +
-      '<p>Right Eye</p><strong>' + els.rightScore.textContent + '</strong>' +
-      '<p>Color Vision</p><strong>' + els.colorVisionScore.textContent + '</strong>' +
-      '<p>Screening tool only - Consult an Optometrist for medical prescriptions.</p>';
+    const timings = collectTimingStats();
+    const generatedAt = new Date().toLocaleString();
+    const mistakeItems = buildMistakeItems().map(item => '<li>' + item + '</li>').join('');
+    const summary = reportSummary();
+    const recommendations = recommendationItems(summary);
+    const list = items => items.map(item => '<li>' + escapeHtml(item) + '</li>').join('');
+    const html = '<!doctype html><html><head><meta charset="utf-8"><title>CARE Vision Screening Report</title>' +
+      '<style>' +
+      ':root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#eef7f6;color:#0f172a;font-family:Arial,sans-serif;line-height:1.55}.report{max-width:980px;margin:0 auto;padding:34px}.hero{padding:30px;border-radius:8px;background:linear-gradient(135deg,#0f766e,#0ea5e9);color:#fff}.hero p{margin:6px 0 0;color:#dffdfa}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase}.hero h1{margin:8px 0 0;font-size:34px;letter-spacing:0}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.card,.section{background:#fff;border:1px solid #dbeafe;border-radius:8px;box-shadow:0 10px 30px rgba(15,23,42,.08)}.card{padding:18px}.card span,.section>span{display:block;color:#0f766e;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase}.card strong{display:block;margin-top:6px;color:#0369a1;font-size:25px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.section{padding:20px;margin-bottom:14px}.section h2{margin:4px 0 12px;font-size:20px}.section ul{margin:0;padding-left:20px}.section li{margin:8px 0}.timing{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.timing div{padding:12px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0}.timing strong{display:block;color:#0f766e;font-size:20px}.note{font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-top:16px}@media(max-width:760px){.report{padding:18px}.cards,.grid,.timing{grid-template-columns:1fr}.hero h1{font-size:28px}}@media print{body{background:#fff}.report{padding:0}.card,.section,.hero{box-shadow:none}}' +
+      '</style></head><body><main class="report">' +
+      '<section class="hero"><span class="eyebrow">CARE VISION SCREENING</span><h1>Eye Test Report</h1><p>Generated: ' + escapeHtml(generatedAt) + '</p></section>' +
+      '<section class="cards"><div class="card"><span>Left Eye</span><strong>' + escapeHtml(els.leftScore.textContent) + '</strong></div><div class="card"><span>Right Eye</span><strong>' + escapeHtml(els.rightScore.textContent) + '</strong></div><div class="card"><span>Color Vision</span><strong>' + escapeHtml(els.colorVisionScore.textContent) + '</strong></div></section>' +
+      '<section class="section"><span>Performance Notes</span><h2>What needs attention</h2><ul>' + mistakeItems + '</ul></section>' +
+      '<section class="section"><span>Time Tracking</span><h2>Response timing</h2><div class="timing"><div><span>Total time</span><strong>' + escapeHtml(formatDuration(timings.total)) + '</strong></div><div><span>Average answer</span><strong>' + escapeHtml(formatDuration(timings.average)) + '</strong></div><div><span>Slowest answer</span><strong>' + escapeHtml(formatDuration(timings.slowest)) + '</strong></div></div></section>' +
+      '<div class="grid"><section class="section"><span>Eye Care Plan</span><h2>Exercises</h2><ul>' + list(recommendations.exercises) + '</ul></section><section class="section"><span>Food Support</span><h2>Diet suggestions</h2><ul>' + list(recommendations.diet) + '</ul></section><section class="section"><span>Daily Habits</span><h2>Do</h2><ul>' + list(recommendations.dos) + '</ul></section><section class="section"><span>Daily Habits</span><h2>Do not</h2><ul>' + list(recommendations.donts) + '</ul></section></div>' +
+      '<p class="note">This is a simple screening only, not a diagnosis or glasses prescription. For eye pain, sudden blur, flashes, injury, or persistent vision problems, consult an optometrist or eye doctor.</p>' +
+      '</main></body></html>';
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

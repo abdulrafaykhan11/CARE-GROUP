@@ -1,5 +1,6 @@
 <?php
 include "config/db.php";
+require_once "config/mail.php";
 $error = '';
 if (isset($_POST["register"])) {
     $emailPattern = "/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/";
@@ -24,6 +25,11 @@ if (isset($_POST["register"])) {
         if ($result) {
             $_SESSION["role"] = $role;
             $_SESSION["user_id"] = mysqli_insert_id($conn);
+            sendRegistrationCongratsEmail([
+                'full_name' => $name,
+                'email' => $email,
+                'role' => $role
+            ]);
 
             if ($_SESSION["role"] === "Doctor") {
                 header("Location: register_doctor.php");

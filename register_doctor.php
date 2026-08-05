@@ -1,6 +1,7 @@
 <?php
 include "config/db.php"; 
 require_once "config/upload_cleanup.php";
+require_once "config/mail.php";
 if (!isset($_SESSION['user_id']) || empty($_SESSION['user_id'])) {
     header("Location: login.php?error=please_login");
     exit();
@@ -77,6 +78,10 @@ if (isset($_POST["register_doctor"])) {
 
                 if ($result) {
                     $_SESSION['role'] = 'Doctor';
+                    $userRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT full_name,email FROM users WHERE user_id=" . (int)$user_id));
+                    if($userRow){
+                        sendProfileCompletedEmail($conn, $userRow, 'Doctor');
+                    }
                     header("Location: doctor/dashboard.php");
                     exit();
                 } else {

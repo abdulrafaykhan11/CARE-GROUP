@@ -503,6 +503,15 @@
   box-shadow: var(--shadow-neon);
 }
 
+.plate-options button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.plate-options button.is-selected:disabled {
+  opacity: 1;
+}
+
 .plate-options button.cannot-see {
   grid-column: 1 / -1;
   font-size: 14px;
@@ -552,6 +561,95 @@
   font-size: 12px;
 }
 
+.report-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.report-section {
+  min-height: 190px;
+  padding: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.report-section-wide {
+  grid-column: 1 / -1;
+}
+
+.report-section h3 {
+  margin: 5px 0 12px;
+  color: var(--text-main);
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+.report-section h4 {
+  margin: 0 0 9px;
+  color: var(--emerald-bio);
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.report-section ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.report-section li {
+  margin: 7px 0;
+}
+
+.report-section li strong {
+  color: var(--text-main);
+}
+
+.timing-grid,
+.dos-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.timing-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.dos-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.timing-grid div,
+.dos-grid div {
+  padding: 13px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  border-radius: var(--radius-sm);
+  background: #F8FAFC;
+}
+
+.timing-grid span {
+  display: block;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.timing-grid strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--emerald-bio);
+  font-family: var(--font-heading);
+  font-size: 22px;
+}
+
 @media print {
   .site-header,
   .site-footer,
@@ -582,6 +680,9 @@
     border-color: #CBD5E1;
   }
   .report-card strong,
+  .report-section h3,
+  .report-section h4,
+  .timing-grid strong,
   .eye-suite h1,
   .eye-suite h2 {
     color: #0F172A;
@@ -617,8 +718,14 @@
   }
   .control-row,
   .letter-actions,
-  .report-card {
+  .report-card,
+  .report-detail-grid,
+  .timing-grid,
+  .dos-grid {
     grid-template-columns: 1fr;
+  }
+  .report-section-wide {
+    grid-column: auto;
   }
   .direction-pad {
     grid-template-columns: repeat(2, 1fr);

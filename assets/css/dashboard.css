@@ -328,6 +328,17 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   .dash-content {
     padding: 20px 4%;
   }
+  .weekday-chart {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 6px !important;
+    height: 150px !important;
+  }
+  .weekday-chart > div span {
+    font-size: 9px !important;
+  }
+  .weekday-chart > div b {
+    font-size: 10px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -336,5 +347,14 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   }
   .flux-grid {
     grid-template-columns: 1fr;
+  }
+  .weekday-chart {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    height: 140px !important;
+  }
+  .weekday-chart > div span,
+  .weekday-chart > div b {
+    font-size: 9px !important;
   }
 }

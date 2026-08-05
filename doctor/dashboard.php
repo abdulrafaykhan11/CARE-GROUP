@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__.'/../config/db.php';
-require_once __DIR__.'/../config/appointment_schema.php';
+require_once __DIR__.'/../config/appointment_actions.php';
 ensureAppointmentChangeSchema($conn);
 
 if(empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'Doctor'){
@@ -21,24 +21,8 @@ $allowed = ['Confirmed','Cancelled','Completed','NoShow'];
 if(isset($_POST['status']) && in_array($_POST['status'], $allowed, true)){
     $aid = (int)$_POST['appointment_id'];
     $status = $_POST['status'];
-    mysqli_query($conn, "UPDATE appointments SET status='$status' WHERE appointment_id=$aid AND doctor_id=$id AND status IN ('Pending','Confirmed')");
-    $msg = '<div class="alert alert-success">Appointment status updated.</div>';
-
-    if($status === 'Confirmed'){
-        require_once __DIR__.'/../config/mail.php';
-        $appDetails = mysqli_fetch_assoc(mysqli_query($conn, "SELECT a.appointment_date, a.appointment_time, u_pat.full_name patient_name, u_pat.email patient_email, u_doc.full_name doctor_name, u_doc.email doctor_email, c.clinic_name FROM appointments a JOIN patients p ON a.patient_id = p.patient_id JOIN users u_pat ON p.user_id = u_pat.user_id JOIN doctors d ON a.doctor_id = d.doctor_id JOIN users u_doc ON d.user_id = u_doc.user_id JOIN clinics c ON a.clinic_id = c.clinic_id WHERE a.appointment_id = $aid"));
-        if($appDetails){
-            sendAppointmentConfirmationEmail([
-                'patient_email' => $appDetails['patient_email'],
-                'patient_name' => $appDetails['patient_name'],
-                'doctor_email' => $appDetails['doctor_email'],
-                'doctor_name' => $appDetails['doctor_name'],
-                'date' => date('d M Y', strtotime($appDetails['appointment_date'])),
-                'time' => date('h:i A', strtotime($appDetails['appointment_time'])),
-                'clinic' => $appDetails['clinic_name']
-            ]);
-        }
-    }
+    [$text, $type] = updateAppointmentStatusWithNotifications($conn, $aid, $status, 'Doctor', $id);
+    $msg = '<div class="alert alert-' . ($type === 'success' ? 'success' : 'error') . '">' . htmlspecialchars($text) . '</div>';
 }
 
 $st = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) total,SUM(status='Pending') pending,SUM(status='Confirmed') confirmed,SUM(status='Completed') completed, SUM(status='NoShow') noshow FROM appointments WHERE doctor_id=$id"));
@@ -167,6 +151,11 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name F
                                                 <?php if($a['status'] === 'Pending'): ?>
                                                     <button class="btn btn-primary" style="padding: 6px 14px; font-size: 11px;" name="status" value="Confirmed">Confirm</button>
                                                 <?php else: ?>
+                                                    <select name="payment_method" style="padding: 6px 10px; font-size: 11px;">
+                                                        <option value="">Payment?</option>
+                                                        <option value="Cash">Cash</option>
+                                                        <option value="Card">Card</option>
+                                                    </select>
                                                     <button class="btn btn-primary" style="padding: 6px 14px; font-size: 11px;" name="status" value="Completed">Complete</button>
                                                     <button class="btn btn-outline" style="padding: 6px 14px; font-size: 11px; border-color: var(--rose-danger); color: var(--rose-danger);" name="status" value="NoShow">No Show</button>
                                                 <?php endif; ?>

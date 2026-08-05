@@ -323,6 +323,18 @@
   align-self: flex-start;
 }
 
+.care-chat-source-tag.is-care {
+  color: #047857;
+  background: rgba(5, 150, 105, 0.1);
+  border-color: rgba(5, 150, 105, 0.24);
+}
+
+.care-chat-source-tag.is-warning {
+  color: #B45309;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
 /* Interactive Action Buttons inside Bot Message */
 .care-chat-actions-group {
   display: flex;

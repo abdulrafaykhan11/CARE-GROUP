@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../config/appointment_schema.php';
+require_once __DIR__ . '/../config/appointment_actions.php';
 require_once __DIR__ . '/../config/directory_schema.php';
 require_once __DIR__ . '/../config/upload_cleanup.php';
 ensureAppointmentChangeSchema($conn);
@@ -127,6 +127,11 @@ function adminFlashFromPost(mysqli $conn, int $adminId): array
                 $safe = mysqli_real_escape_string($conn, $status);
                 mysqli_query($conn, "UPDATE doctors SET verification_status='$safe', verified_by=NULL, verified_at=NULL WHERE doctor_id=$doctorId");
             }
+            $doctor = mysqli_fetch_assoc(mysqli_query($conn, "SELECT u.full_name,u.email FROM doctors d JOIN users u ON u.user_id=d.user_id WHERE d.doctor_id=$doctorId LIMIT 1"));
+            if ($doctor) {
+                $body = careEmailShell('Doctor verification updated', '<p>Hello Dr. ' . h($doctor['full_name']) . ',</p><p>Your CARE Nexus verification status is now <strong>' . h($status) . '</strong>.</p>');
+                sendCareMail([['email' => $doctor['email'], 'name' => $doctor['full_name']]], 'CARE Nexus doctor verification updated', $body, '', adminRecipients($conn));
+            }
             return ['Doctor verification updated.', 'success'];
         }
     }
@@ -242,10 +247,7 @@ function adminFlashFromPost(mysqli $conn, int $adminId): array
         $appointmentId = postInt('appointment_id');
         $status = $_POST['status'] ?? '';
         if (in_array($status, ['Pending', 'Confirmed', 'Completed', 'Cancelled', 'NoShow'], true)) {
-            $stmt = mysqli_prepare($conn, "UPDATE appointments SET status=? WHERE appointment_id=?");
-            mysqli_stmt_bind_param($stmt, 'si', $status, $appointmentId);
-            mysqli_stmt_execute($stmt);
-            return ['Appointment status updated.', 'success'];
+            return updateAppointmentStatusWithNotifications($conn, $appointmentId, $status, 'Admin');
         }
     }
 

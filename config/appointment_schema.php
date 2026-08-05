@@ -17,7 +17,24 @@ function ensureAppointmentChangeSchema(mysqli $conn): void
         mysqli_query($conn, "ALTER TABLE appointments ADD COLUMN rescheduled_at TIMESTAMP NULL AFTER rescheduled_by");
     }
 
+    ensureAppointmentRevenueSchema($conn);
     ensureAppointmentVisualSchema($conn);
+}
+
+/** Adds payment/revenue tracking for completed appointments. */
+function ensureAppointmentRevenueSchema(mysqli $conn): void
+{
+    $column = mysqli_query($conn, "SHOW COLUMNS FROM appointments LIKE 'payment_method'");
+    if (!$column || mysqli_num_rows($column) === 0) {
+        mysqli_query($conn, "ALTER TABLE appointments ADD COLUMN payment_method ENUM('Cash','Card') NULL AFTER status");
+    }
+
+    $column = mysqli_query($conn, "SHOW COLUMNS FROM appointments LIKE 'completed_at'");
+    if (!$column || mysqli_num_rows($column) === 0) {
+        mysqli_query($conn, "ALTER TABLE appointments ADD COLUMN completed_at TIMESTAMP NULL AFTER payment_method");
+    }
+
+    mysqli_query($conn, "UPDATE appointments SET payment_method='Cash', completed_at=COALESCE(completed_at, updated_at, created_at) WHERE status='Completed' AND payment_method IS NULL");
 }
 
 /** Adds optional symptom photo storage for appointment records. */
