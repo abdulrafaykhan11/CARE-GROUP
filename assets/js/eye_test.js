@@ -337,7 +337,7 @@
   }
 
   function nextChallenge() {
-    state.currentAnswer = directions[state.challengeCursor % directions.length];
+    state.currentAnswer = directions[Math.floor(Math.random() * directions.length)];
     state.challengeCursor += 1;
     state.currentLetter = snellenLetters[Math.floor(Math.random() * snellenLetters.length)];
     renderOptotype();
@@ -739,13 +739,19 @@
     state.voiceActive = true;
     recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    let lastProcessedTime = 0;
+    recognition.interimResults = true;
     recognition.continuous = true;
     recognition.onresult = event => {
       const latest = event.results[event.results.length - 1][0].transcript.toLowerCase();
       const match = spokenDirection(latest);
-      if (match) answerAcuity(match);
-      else setFeedback('Voice heard "' + latest + '". Say up, down, left, or right.');
+      const now = Date.now();
+      if (match && (now - lastProcessedTime > 1500)) {
+        lastProcessedTime = now;
+        answerAcuity(match);
+      } else if (!match && event.results[event.results.length - 1].isFinal) {
+        setFeedback('Voice heard "' + latest + '". Say up, down, left, or right.');
+      }
     };
     recognition.onerror = event => {
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
