@@ -1,8 +1,17 @@
 <?php
 // Gemini API Configuration & System Guardrails for CARE Nexus Platform
 
+$envFile = __DIR__ . '/../.env';
+$apiKey = ''; // Load from .env
+if (file_exists($envFile)) {
+    $envVars = parse_ini_file($envFile);
+    if (isset($envVars['GEMINI_API_KEY'])) {
+        $apiKey = $envVars['GEMINI_API_KEY'];
+    }
+}
+
 if (!defined('GEMINI_API_KEY')) {
-    define('GEMINI_API_KEY', 'AQ.Ab8RN6KA04hjoTvIWmey_5x2Vp_s49Kt-XefLWnDd-waeYguaA');
+    define('GEMINI_API_KEY', $apiKey);
 }
 
 if (!defined('GEMINI_MODEL')) {
