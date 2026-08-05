@@ -116,7 +116,7 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name F
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
                         <p class="eyebrow">SCHEDULE QUEUE</p>
-                        <h3 style="margin: 0; font-size: 20px; color: #FFF;">Upcoming Patient Appointments</h3>
+                        <h3 style="margin: 0; font-size: 20px; color: var(--text-main);">Upcoming Patient Appointments</h3>
                     </div>
                     <a href="appointments.php" class="btn btn-outline">View All</a>
                 </div>
@@ -141,7 +141,7 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name patient_name,c.clinic_name F
                                         <small style="color: var(--text-muted);"><?=date('h:i A', strtotime($a['appointment_time']))?></small>
                                     </td>
                                     <td>
-                                        <strong style="color: #FFF;"><?=htmlspecialchars($a['patient_name'])?></strong>
+                                        <strong style="color: var(--text-main);"><?=htmlspecialchars($a['patient_name'])?></strong>
                                         <?php if(!empty($a['reschedule_reason'])): ?>
                                             <div style="color: var(--rose-danger); font-size: 11px; margin-top: 4px;">
                                                 Rescheduled: <?=htmlspecialchars($a['reschedule_reason'])?>

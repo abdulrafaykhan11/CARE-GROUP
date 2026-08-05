@@ -198,10 +198,10 @@ include 'includes/header.php';
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
       <?php foreach ($homeFaqs as $faq): ?>
         <article class="profile-shard" style="padding: 24px;">
-          <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--cyan-neon); text-transform: uppercase; background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.25); padding: 3px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px;">
+          <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--cyan-neon); text-transform: uppercase; background: rgba(2,132,199,0.08); border: 1px solid rgba(2,132,199,0.25); padding: 3px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px;">
             <?= htmlspecialchars($faq['specialization_name']) ?>
           </span>
-          <h3 style="font-size: 17px; margin: 0 0 10px; color: #FFF; line-height: 1.4;"><?= htmlspecialchars($faq['question']) ?></h3>
+          <h3 style="font-size: 17px; margin: 0 0 10px; color: var(--text-main); line-height: 1.4;"><?= htmlspecialchars($faq['question']) ?></h3>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin: 0;">
             <?= htmlspecialchars($faq['answer']) ?>
           </p>

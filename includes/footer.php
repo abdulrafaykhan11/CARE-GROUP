@@ -1,4 +1,4 @@
-  <footer style="background: rgba(4, 7, 17, 0.95); border-top: 1px solid var(--border-cyber); padding: 60px 6% 40px; margin-top: 80px; position: relative; z-index: 10;">
+  <footer style="background: rgba(255, 255, 255, 0.92); border-top: 1px solid rgba(226, 232, 240, 0.9); padding: 60px 6% 40px; margin-top: 80px; position: relative; z-index: 10; box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.03);">
     <div style="max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 40px;">
       <div>
         <a class="brand" href="index.php" style="margin-bottom: 16px; display: inline-flex;">
@@ -26,14 +26,14 @@
           Network Telemetry
         </h4>
         <div style="display: grid; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">
-          <div>STATUS: <span style="color: var(--emerald-bio);">100% OPERATIONAL</span></div>
-          <div>ENCRYPTION: <span style="color: var(--cyan-neon);">SECURE PORTAL</span></div>
-          <div>COVERAGE: <span style="color: var(--violet-quantum);">8 METROPOLITAN CITIES</span></div>
+          <div>STATUS: <span style="color: var(--emerald-bio); font-weight: 700;">100% OPERATIONAL</span></div>
+          <div>ENCRYPTION: <span style="color: var(--cyan-neon); font-weight: 700;">SECURE PORTAL</span></div>
+          <div>COVERAGE: <span style="color: var(--violet-quantum); font-weight: 700;">8 METROPOLITAN CITIES</span></div>
         </div>
       </div>
     </div>
     
-    <div style="max-width: 1280px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center; color: var(--text-dim); font-size: 13px;">
+    <div style="max-width: 1280px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(226, 232, 240, 0.9); text-align: center; color: var(--text-dim); font-size: 13px;">
       &copy; <?= date('Y') ?> CARE Group Medical Services Platform. All rights reserved.
     </div>
   </footer>

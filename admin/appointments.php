@@ -41,7 +41,7 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
             <!-- Appointments Cyber Table -->
             <section class="cyber-table-wrap" style="margin-bottom: 40px;">
                 <p class="eyebrow">VISITS TIMELINE</p>
-                <h3 style="margin:0 0 16px; color:#FFF;">Clinical Appointments Log</h3>
+                <h3 style="margin:0 0 16px; color: var(--text-main);">Clinical Appointments Log</h3>
                 <table class="cyber-table">
                     <thead>
                         <tr>
@@ -61,7 +61,7 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
                                     <small style="color: var(--text-muted);"><?=date('h:i A', strtotime($a['appointment_time']))?></small>
                                 </td>
                                 <td>
-                                    <strong style="color: #FFF;">Patient: <?=h($a['patient_name'])?></strong><br>
+                                    <strong style="color: var(--text-main);">Patient: <?=h($a['patient_name'])?></strong><br>
                                     <small style="color: var(--text-muted);">Doctor: Dr. <?=h($a['doctor_name'])?></small>
                                 </td>
                                 <td><?=h($a['clinic_name'])?></td>
@@ -97,7 +97,7 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
             <!-- Availability Schedules -->
             <section class="cyber-table-wrap">
                 <p class="eyebrow">AVAILABILITY FLUX</p>
-                <h3 style="margin:0 0 16px; color:#FFF;">Doctor Active Timings</h3>
+                <h3 style="margin:0 0 16px; color: var(--text-main);">Doctor Active Timings</h3>
                 <table class="cyber-table">
                     <thead>
                         <tr>
@@ -113,7 +113,7 @@ $availabilityRows = mysqli_query($conn, "SELECT da.availability_id,da.day,da.sta
                     <tbody>
                         <?php while($row = mysqli_fetch_assoc($availabilityRows)): ?>
                             <tr>
-                                <td><strong style="color: #FFF;">Dr. <?=h($row['doctor_name'])?></strong></td>
+                                <td><strong style="color: var(--text-main);">Dr. <?=h($row['doctor_name'])?></strong></td>
                                 <td style="color: var(--text-muted);"><?=h($row['clinic_name'] ?? 'Unassigned')?></td>
                                 <td style="font-family: var(--font-mono); font-weight: 700; color: var(--cyan-neon);"><?=$row['day']?></td>
                                 <td style="font-family: var(--font-mono); font-size: 12px;">

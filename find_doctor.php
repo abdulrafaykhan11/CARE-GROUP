@@ -105,7 +105,7 @@ include 'includes/header.php';
     <div class="holographic-map-header">
       <div>
         <p class="eyebrow">CYBER MAP RADAR</p>
-        <h3 style="font-size: 20px; margin: 0; color: #FFF;">Holographic City Network Grid</h3>
+        <h3 style="font-size: 20px; margin: 0; color: var(--text-main);">Holographic City Network Grid</h3>
       </div>
       <div style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">
         <?=$totalDoctors?> VERIFIED SHARDS ACTIVE

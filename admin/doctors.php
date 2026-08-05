@@ -48,7 +48,7 @@ $doctors = mysqli_query($conn, "SELECT d.*,u.full_name,u.email,u.phone,u.status 
                                 <span class="status-pill status-<?=strtolower($d['verification_status'])?>" style="margin-bottom: 6px;">
                                     <?=h($d['verification_status'])?>
                                 </span>
-                                <h3 style="font-size: 18px; margin: 4px 0; color: #FFF;">Dr. <?=h($d['full_name'])?></h3>
+                                <h3 style="font-size: 18px; margin: 4px 0; color: var(--text-main);">Dr. <?=h($d['full_name'])?></h3>
                                 <div style="font-size: 13px; color: var(--text-muted);"><?=h($d['specialization_name'])?> &middot; <?=h($d['city_name'])?></div>
                                 <div style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan-neon); margin-top: 4px;">
                                     PMDC: <?=h($d['pmdc_registration_number'])?> &middot; <?=intval($d['experience_years'])?> YRS
@@ -56,7 +56,7 @@ $doctors = mysqli_query($conn, "SELECT d.*,u.full_name,u.email,u.phone,u.status 
                             </div>
                         </a>
 
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-cyber);">
                             <a class="btn btn-outline" href="doctor_detail.php?id=<?=$d['doctor_id']?>" style="padding: 6px 14px; font-size: 11px;">
                                 Review Credentials
                             </a>

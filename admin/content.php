@@ -32,7 +32,7 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
                 <!-- FAQ Shards -->
                 <article class="cyber-table-wrap" style="margin: 0; width: 100%;">
                     <p class="eyebrow">SPECIALTY FAQ ARCHIVE</p>
-                    <h3 style="margin: 0 0 16px; color: #FFF;">Specialty FAQs</h3>
+                    <h3 style="margin: 0 0 16px; color: var(--text-main);">Specialty FAQs</h3>
                     <table class="cyber-table">
                         <thead>
                             <tr>
@@ -46,7 +46,7 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
                             <?php while($row = mysqli_fetch_assoc($faqRows)): ?>
                                 <tr>
                                     <td>
-                                        <strong style="color: #FFF; display: block; margin-bottom: 4px;"><?=h($row['question'])?></strong>
+                                        <strong style="color: var(--text-main); display: block; margin-bottom: 4px;"><?=h($row['question'])?></strong>
                                         <small style="color: var(--text-muted); line-height: 1.5; display: block; max-width: 760px;"><?=h($row['answer'])?></small>
                                     </td>
                                     <td style="font-family: var(--font-mono); color: var(--cyan-neon); font-size: 12px;"><?=h($row['specialization_name'])?></td>
@@ -76,7 +76,7 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
                 <!-- News Shards -->
                 <article class="cyber-table-wrap" style="margin: 0; width: 100%;">
                     <p class="eyebrow">MEDICAL NEWS SHARDS</p>
-                    <h3 style="margin: 0 0 16px; color: #FFF;">Public Medical News</h3>
+                    <h3 style="margin: 0 0 16px; color: var(--text-main);">Public Medical News</h3>
                     <table class="cyber-table">
                         <thead>
                             <tr>
@@ -90,7 +90,7 @@ $faqRows = mysqli_query($conn, "SELECT f.faq_id,f.question,f.answer,f.status,s.s
                                 <?php while($row = mysqli_fetch_assoc($newsRows)): ?>
                                     <tr>
                                         <td>
-                                            <strong style="color: #FFF;"><?=h($row['title'])?></strong><br>
+                                            <strong style="color: var(--text-main);"><?=h($row['title'])?></strong><br>
                                             <small style="color: var(--text-muted); font-family: var(--font-mono);">
                                                 Created <?=date('d M Y', strtotime($row['created_at']))?>
                                             </small>

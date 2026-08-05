@@ -121,10 +121,10 @@ include 'includes/header.php';
         </p>
 
         <!-- Telemetry Summary Shard -->
-        <div style="background: rgba(4, 8, 20, 0.85); border: 1px solid var(--border-cyber); border-radius: var(--radius-md); padding: 20px; margin-bottom: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-md); padding: 20px; margin-bottom: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
             <div>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">PATIENT NAME</span>
-                <strong style="color: #FFF; font-size: 15px;"><?=htmlspecialchars($app['patient_name'])?></strong>
+                <strong style="color: var(--text-main); font-size: 15px;"><?=htmlspecialchars($app['patient_name'])?></strong>
             </div>
             <div>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">SPECIALIST DOCTOR</span>
@@ -133,7 +133,7 @@ include 'includes/header.php';
             </div>
             <div>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;">CLINIC LOCATION</span>
-                <strong style="color: #FFF; font-size: 15px;"><?=htmlspecialchars($app['clinic_name'])?></strong>
+                <strong style="color: var(--text-main); font-size: 15px;"><?=htmlspecialchars($app['clinic_name'])?></strong>
             </div>
             <div>
                 <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 6px;">VISIT STATUS</span>

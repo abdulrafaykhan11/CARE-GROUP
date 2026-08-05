@@ -43,7 +43,14 @@ if (isset($conn) && $conn) {
     <a class="brand" href="index.php">
       CARE <span>NEXUS</span>
     </a>
-    <nav>
+    
+    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav id="siteNav">
       <a href="index.php">Home</a>
       <a href="find_doctor.php">Find Doctor</a>
       <a href="index.php#doctors">Top Doctors</a>
@@ -63,3 +70,16 @@ if (isset($conn) && $conn) {
       <?php endif; ?>
     </nav>
   </header>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const toggle = document.getElementById('mobileNavToggle');
+      const nav = document.getElementById('siteNav');
+      if (toggle && nav) {
+        toggle.addEventListener('click', function() {
+          toggle.classList.toggle('open');
+          nav.classList.toggle('nav-open');
+        });
+      }
+    });
+  </script>

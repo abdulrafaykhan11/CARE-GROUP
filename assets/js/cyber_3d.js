@@ -1,11 +1,11 @@
 /**
- * CARE Group - Cybernetic Clinical 3D WebGL & GSAP Animation Engine
+ * CARE Group - Clinical 3D WebGL & Interactive Engine
  * Features:
- * 1. Three.js Medical 3D DNA Double Helix & Cardiac Bio-Mesh Core (Hero Canvas)
- * 2. Dynamic Holographic City Network Matrix with Real DB Doctor Counts
- * 3. GSAP 3 ScrollTrigger Shard Reveals & Micro-animations
- * 4. 3D Tilt Cards & Glowing Mouse Tracking for All Cards
- * 5. Interactive Admin Chart Hover Tooltips
+ * 1. Three.js Medical 3D DNA Helix & Bio-Mesh Core (Light Mode Friendly)
+ * 2. Holographic City Network Matrix (Light Mode Colors)
+ * 3. GSAP 3 Animations
+ * 4. 3D Tilt Cards
+ * 5. Counter Stats
  */
 
 (function() {
@@ -36,13 +36,13 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.34));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.85));
 
-    const keyLight = new THREE.PointLight(0x9fffe0, 1.45, 220);
+    const keyLight = new THREE.PointLight(0x0284c7, 1.8, 220);
     keyLight.position.set(-45, 46, 82);
     scene.add(keyLight);
 
-    const rimLight = new THREE.PointLight(0x22c55e, 1.1, 220);
+    const rimLight = new THREE.PointLight(0x059669, 1.4, 220);
     rimLight.position.set(60, -28, 74);
     scene.add(rimLight);
 
@@ -59,7 +59,7 @@
     const strandB = [];
     const nucleotideMeshes = [];
     const bondMeshes = [];
-    const palette = [0x22c55e, 0x14b8a6, 0x60a5fa, 0xa7f3d0];
+    const palette = [0x0284c7, 0x059669, 0x4f46e5, 0x0ea5e9];
 
     function helixPoint(index, offset = 0) {
       const progress = index / (curvePoints - 1);
@@ -78,19 +78,19 @@
     }
 
     const strandMaterialA = new THREE.MeshStandardMaterial({
-      color: 0x34d399,
-      emissive: 0x064e3b,
-      emissiveIntensity: 0.8,
-      roughness: 0.28,
-      metalness: 0.18
+      color: 0x0284c7,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.2,
+      roughness: 0.3,
+      metalness: 0.1
     });
 
     const strandMaterialB = new THREE.MeshStandardMaterial({
-      color: 0x5eead4,
-      emissive: 0x0f766e,
-      emissiveIntensity: 0.7,
+      color: 0x059669,
+      emissive: 0x059669,
+      emissiveIntensity: 0.2,
       roughness: 0.3,
-      metalness: 0.16
+      metalness: 0.1
     });
 
     const strandTubeA = new THREE.Mesh(
@@ -107,22 +107,22 @@
     const cylinderGeo = new THREE.CylinderGeometry(0.52, 0.52, 1, 12);
     const upVector = new THREE.Vector3(0, 1, 0);
 
-    function makeMaterial(color, opacity = 0.9) {
+    function makeMaterial(color, opacity = 0.85) {
       return new THREE.MeshStandardMaterial({
         color,
         emissive: color,
-        emissiveIntensity: 0.34,
+        emissiveIntensity: 0.25,
         transparent: true,
         opacity,
-        roughness: 0.25,
-        metalness: 0.12
+        roughness: 0.3,
+        metalness: 0.1
       });
     }
 
     function createBond(start, end, color) {
       const direction = new THREE.Vector3().subVectors(end, start);
       const midpoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-      const bond = new THREE.Mesh(cylinderGeo, makeMaterial(color, 0.66));
+      const bond = new THREE.Mesh(cylinderGeo, makeMaterial(color, 0.65));
 
       bond.scale.y = direction.length();
       bond.position.copy(midpoint);
@@ -148,14 +148,14 @@
       dnaGroup.add(nodeA, nodeB);
       nucleotideMeshes.push(nodeA, nodeB);
 
-      createBond(a, b, i % 2 ? 0x86efac : 0x93c5fd);
+      createBond(a, b, i % 2 ? 0x059669 : 0x0284c7);
     }
 
     const orbitGroup = new THREE.Group();
     const orbitMat = new THREE.MeshBasicMaterial({
-      color: 0x22c55e,
+      color: 0x0284c7,
       transparent: true,
-      opacity: 0.18
+      opacity: 0.15
     });
     for (let i = 0; i < 3; i++) {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(34 + i * 7, 0.42, 12, 96), orbitMat.clone());
@@ -178,9 +178,9 @@
 
     const dustMat = new THREE.PointsMaterial({
       size: 2.2,
-      color: 0xa7f3d0,
+      color: 0x0ea5e9,
       transparent: true,
-      opacity: 0.52,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending
     });
     const dustMesh = new THREE.Points(dustGeo, dustMat);
@@ -201,7 +201,7 @@
     const ecgGeo = new THREE.BufferGeometry().setFromPoints(ecgPoints);
     const ecgLine = new THREE.Line(
       ecgGeo,
-      new THREE.LineBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.58 })
+      new THREE.LineBasicMaterial({ color: 0x059669, transparent: true, opacity: 0.55 })
     );
     scene.add(ecgLine);
 
@@ -230,7 +230,7 @@
       orbitGroup.rotation.z += 0.004;
       dustMesh.rotation.y -= 0.0016;
       dustMesh.rotation.x += 0.0007;
-      ecgLine.material.opacity = 0.28 + Math.sin(elapsed * 3.5) * 0.16 + 0.16;
+      ecgLine.material.opacity = 0.3 + Math.sin(elapsed * 3.5) * 0.15 + 0.15;
       ecgLine.position.x = Math.sin(elapsed * 0.9) * 8;
 
       nucleotideMeshes.forEach(mesh => {
@@ -258,7 +258,7 @@
   }
 
   /* ----------------------------------------------------
-     2. DYNAMIC HOLOGRAPHIC CITY NETWORK MATRIX (REAL DB COUNTS)
+     2. DYNAMIC HOLOGRAPHIC CITY NETWORK MATRIX (LIGHT MODE)
   ---------------------------------------------------- */
   function initHolographicMap() {
     const canvas = document.getElementById('holographic-map-canvas');
@@ -268,7 +268,6 @@
     let width = canvas.width = canvas.parentElement.clientWidth || 800;
     let height = canvas.height = 360;
 
-    // Fetch dynamic doctor count per city from PHP if available
     const dbCounts = window.CITY_DOCTOR_COUNTS || {};
 
     const cityNodes = [
@@ -289,7 +288,7 @@
       ctx.clearRect(0, 0, width, height);
 
       // Grid Lines
-      ctx.strokeStyle = 'rgba(0, 242, 254, 0.06)';
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.08)';
       ctx.lineWidth = 1;
       const gridSize = 30;
 
@@ -307,7 +306,7 @@
       }
 
       // Synapse Lines
-      ctx.strokeStyle = 'rgba(0, 242, 254, 0.25)';
+      ctx.strokeStyle = 'rgba(2, 132, 199, 0.22)';
       ctx.lineWidth = 1.2;
       ctx.setLineDash([4, 4]);
 
@@ -337,9 +336,9 @@
       if (scanLineY > height) scanLineY = 0;
 
       const grad = ctx.createLinearGradient(0, scanLineY - 20, 0, scanLineY + 5);
-      grad.addColorStop(0, 'rgba(0, 242, 254, 0)');
-      grad.addColorStop(0.8, 'rgba(0, 242, 254, 0.3)');
-      grad.addColorStop(1, 'rgba(0, 242, 254, 0.8)');
+      grad.addColorStop(0, 'rgba(2, 132, 199, 0)');
+      grad.addColorStop(0.8, 'rgba(2, 132, 199, 0.15)');
+      grad.addColorStop(1, 'rgba(2, 132, 199, 0.4)');
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, scanLineY - 20, width, 25);
@@ -354,16 +353,16 @@
 
         // Pulse Ring
         const pulse = (Math.sin(now + nx) + 1) * 6 + 6;
-        ctx.strokeStyle = isHovered ? '#10B981' : 'rgba(0, 242, 254, 0.6)';
+        ctx.strokeStyle = isHovered ? '#059669' : 'rgba(2, 132, 199, 0.5)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.arc(nx, ny, pulse, 0, Math.PI * 2);
         ctx.stroke();
 
         // Solid Core
-        ctx.fillStyle = isHovered ? '#10B981' : '#00F2FE';
-        ctx.shadowColor = isHovered ? '#10B981' : '#00F2FE';
-        ctx.shadowBlur = 14;
+        ctx.fillStyle = isHovered ? '#059669' : '#0284C7';
+        ctx.shadowColor = isHovered ? 'rgba(5, 150, 105, 0.4)' : 'rgba(2, 132, 199, 0.4)';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.arc(nx, ny, 5, 0, Math.PI * 2);
         ctx.fill();
@@ -371,11 +370,11 @@
 
         // Node Label
         ctx.font = '600 11px "Space Grotesk", sans-serif';
-        ctx.fillStyle = isHovered ? '#10B981' : '#E2E8F0';
+        ctx.fillStyle = isHovered ? '#059669' : '#0F172A';
         ctx.fillText(node.name.toUpperCase(), nx + 12, ny + 4);
 
         ctx.font = '400 9px "JetBrains Mono", monospace';
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.85)';
+        ctx.fillStyle = '#475569';
         ctx.fillText(node.count, nx + 12, ny + 16);
       });
 
@@ -436,15 +435,15 @@
 
     gsap.from('.cyber-hero h1', {
       opacity: 0,
-      y: 40,
-      duration: 1.2,
+      y: 30,
+      duration: 1,
       ease: 'power3.out'
     });
 
     gsap.from('.cyber-hero .eyebrow-badge', {
       opacity: 0,
-      scale: 0.8,
-      duration: 0.8,
+      scale: 0.85,
+      duration: 0.7,
       delay: 0.2,
       ease: 'back.out(1.7)'
     });
@@ -454,14 +453,14 @@
         gsap.from(card, {
           scrollTrigger: {
             trigger: card,
-            start: 'top 90%',
+            start: 'top 92%',
             toggleActions: 'play none none none'
           },
           opacity: 0,
-          y: 35,
-          scale: 0.96,
-          duration: 0.7,
-          delay: (index % 4) * 0.1,
+          y: 25,
+          scale: 0.98,
+          duration: 0.6,
+          delay: (index % 4) * 0.08,
           ease: 'power3.out'
         });
       });
@@ -469,10 +468,10 @@
   }
 
   /* ----------------------------------------------------
-     4. 3D TILT EFFECT FOR ALL CARDS & SHARDS
+     4. 3D TILT EFFECT FOR ALL CARDS
   ---------------------------------------------------- */
   function initCard3DTilt() {
-    const cards = document.querySelectorAll('.doctor-card, .profile-shard, .cyber-glass-panel, .cyber-card, .hud-metric, .admin-stat-card');
+    const cards = document.querySelectorAll('.doctor-card, .profile-shard, .hud-metric');
 
     cards.forEach(card => {
       card.addEventListener('mousemove', (e) => {
@@ -483,12 +482,10 @@
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
 
-        const rotateX = (centerY - y) / 16;
-        const rotateY = (x - centerX) / 16;
+        const rotateX = (centerY - y) / 20;
+        const rotateY = (x - centerX) / 20;
 
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-5px)`;
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
+        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
       });
 
       card.addEventListener('mouseleave', () => {
@@ -535,7 +532,7 @@
     const bars = document.querySelectorAll('.funnel-row, [data-chart-bar]');
     bars.forEach(bar => {
       bar.addEventListener('mouseenter', () => {
-        bar.style.transform = 'scale(1.03)';
+        bar.style.transform = 'scale(1.02)';
         bar.style.transition = 'transform 0.2s ease';
       });
       bar.addEventListener('mouseleave', () => {

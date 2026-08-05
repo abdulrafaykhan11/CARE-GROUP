@@ -47,17 +47,17 @@ $appointmentsCount = oneCount($conn, "SELECT COUNT(*) total FROM appointments WH
                     <span class="status-pill status-<?=strtolower($doctor['verification_status'])?>" style="margin-bottom: 12px; display: inline-block;">
                         <?=h($doctor['verification_status'])?>
                     </span>
-                    <h3 style="font-size: 22px; color: #FFF; margin: 6px 0;">Dr. <?=h($doctor['full_name'])?></h3>
+                    <h3 style="font-size: 22px; color: var(--text-main); margin: 6px 0;">Dr. <?=h($doctor['full_name'])?></h3>
                     <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;"><?=h($doctor['specialization_name'])?> &middot; <?=h($doctor['city_name'])?></p>
 
-                    <div style="text-align: left; background: rgba(4,8,20,0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; font-size: 13px; margin-bottom: 20px;">
-                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Email:</strong> <span style="color: #FFF; font-family: var(--font-mono);"><?=h($doctor['email'])?></span></div>
-                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Phone:</strong> <span style="color: #FFF; font-family: var(--font-mono);"><?=h($doctor['phone'])?></span></div>
+                    <div style="text-align: left; background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; font-size: 13px; margin-bottom: 20px;">
+                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Email:</strong> <span style="color: var(--text-main); font-family: var(--font-mono);"><?=h($doctor['email'])?></span></div>
+                        <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Phone:</strong> <span style="color: var(--text-main); font-family: var(--font-mono);"><?=h($doctor['phone'])?></span></div>
                         <div style="margin-bottom: 8px;"><strong style="color: var(--text-muted);">Account:</strong> <span style="color: var(--cyan-neon); font-weight: 700;"><?=h($doctor['user_status'])?></span></div>
                         <div><strong style="color: var(--text-muted);">Total Visits:</strong> <span style="color: var(--emerald-bio); font-family: var(--font-mono); font-weight: 700;"><?=$appointmentsCount?></span></div>
                     </div>
 
-                    <form method="post" style="background: rgba(0, 242, 254, 0.05); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; text-align: left;">
+                    <form method="post" style="background: rgba(2, 132, 197, 0.05); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px; text-align: left;">
                         <input type="hidden" name="action" value="set_doctor_verification">
                         <input type="hidden" name="doctor_id" value="<?=$doctorId?>">
                         <label style="font-size: 11px; font-family: var(--font-mono); color: var(--cyan-neon); font-weight: 700;">VERIFICATION DECISION</label>
@@ -75,36 +75,36 @@ $appointmentsCount = oneCount($conn, "SELECT COUNT(*) total FROM appointments WH
                     <!-- Identity Credentials Shard -->
                     <article class="cyber-table-wrap" style="margin: 0;">
                         <p class="eyebrow">BIO-METRIC & REGISTRATION TELEMETRY</p>
-                        <h3 style="margin:0 0 20px; color:#FFF;">Credentials Verification</h3>
+                        <h3 style="margin:0 0 20px; color: var(--text-main);">Credentials Verification</h3>
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">PMDC REGISTRATION #</span>
                                 <strong style="display: block; font-size: 16px; color: var(--cyan-neon); margin-top: 4px; font-family: var(--font-mono);"><?=h($doctor['pmdc_registration_number'])?></strong>
                             </div>
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">CNIC NUMBER</span>
-                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px; font-family: var(--font-mono);"><?=h($doctor['cnic'])?></strong>
+                                <strong style="display: block; font-size: 16px; color: var(--text-main); margin-top: 4px; font-family: var(--font-mono);"><?=h($doctor['cnic'])?></strong>
                             </div>
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">QUALIFICATION</span>
-                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px;"><?=h($doctor['qualification'])?></strong>
+                                <strong style="display: block; font-size: 16px; color: var(--text-main); margin-top: 4px;"><?=h($doctor['qualification'])?></strong>
                             </div>
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">EXPERIENCE</span>
                                 <strong style="display: block; font-size: 16px; color: var(--emerald-bio); margin-top: 4px;"><?=intval($doctor['experience_years'])?> Years</strong>
                             </div>
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">CONSULTATION FEE</span>
                                 <strong style="display: block; font-size: 16px; color: var(--cyan-neon); margin-top: 4px;">PKR <?=number_format((float)$doctor['consultation_fee'])?></strong>
                             </div>
-                            <div style="background: rgba(4,8,20,0.6); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                            <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                                 <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">VERIFIED BY ADMIN</span>
-                                <strong style="display: block; font-size: 16px; color: #FFF; margin-top: 4px;"><?=h($doctor['verified_by_name'] ?: 'Not Verified Yet')?></strong>
+                                <strong style="display: block; font-size: 16px; color: var(--text-main); margin-top: 4px;"><?=h($doctor['verified_by_name'] ?: 'Not Verified Yet')?></strong>
                             </div>
                         </div>
 
-                        <div style="background: rgba(4,8,20,0.8); padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
+                        <div style="background: var(--bg-card); padding: 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-cyber);">
                             <strong style="color: var(--cyan-neon); font-size: 12px; font-family: var(--font-mono);">BIO & CARE PHILOSOPHY</strong>
                             <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin: 8px 0 0;"><?=h($doctor['bio'])?></p>
                         </div>
@@ -113,12 +113,12 @@ $appointmentsCount = oneCount($conn, "SELECT COUNT(*) total FROM appointments WH
                     <!-- Document Certificates -->
                     <article class="cyber-table-wrap" style="margin: 0;">
                         <p class="eyebrow">UPLOADED CERTIFICATE ASSETS</p>
-                        <h3 style="margin:0 0 20px; color:#FFF;">License & Degree Verification</h3>
+                        <h3 style="margin:0 0 20px; color: var(--text-main);">License & Degree Verification</h3>
 
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                             <?php foreach([['PMDC License Certificate',$license],['Medical Degree Certificate',$degree]] as $doc): ?>
-                                <div style="background: rgba(4,8,20,0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 18px;">
-                                    <h4 style="margin: 0 0 14px; color: #FFF; font-size: 16px;"><?=h($doc[0])?></h4>
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 18px;">
+                                    <h4 style="margin: 0 0 14px; color: var(--text-main); font-size: 16px;"><?=h($doc[0])?></h4>
                                     <?php if($doc[1]):
                                         $ext = strtolower(pathinfo($doc[1], PATHINFO_EXTENSION));
                                     ?>

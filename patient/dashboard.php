@@ -87,7 +87,7 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name doctor_name,s.specialization
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <div>
                         <p class="eyebrow">CARE TIMELINE</p>
-                        <h3 style="margin: 0; font-size: 20px; color: #FFF;">Your Clinical Visit Requests</h3>
+                        <h3 style="margin: 0; font-size: 20px; color: var(--text-main);">Your Clinical Visit Requests</h3>
                     </div>
                     <a href="../find_doctor.php" class="btn btn-outline">Find More Doctors</a>
                 </div>
@@ -112,7 +112,7 @@ $apps = mysqli_query($conn, "SELECT a.*,u.full_name doctor_name,s.specialization
                                         <small style="color: var(--text-muted);"><?=date('h:i A', strtotime($a['appointment_time']))?></small>
                                     </td>
                                     <td>
-                                        <strong style="color: #FFF;">Dr. <?=htmlspecialchars($a['doctor_name'])?></strong>
+                                        <strong style="color: var(--text-main);">Dr. <?=htmlspecialchars($a['doctor_name'])?></strong>
                                         <?php if(!empty($a['reschedule_reason'])): ?>
                                             <div style="color: var(--rose-danger); font-size: 11px; margin-top: 4px;">
                                                 Changed by <?=htmlspecialchars($a['rescheduled_by'])?>: <?=htmlspecialchars($a['reschedule_reason'])?>

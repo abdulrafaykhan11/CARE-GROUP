@@ -1,4 +1,4 @@
-/* Care Group - Cybernetic Dashboard & HUD Styles */
+/* Care Group - Clinical Dashboard & HUD Styles */
 
 /* Sidebar Layout & Command Header */
 .dash-container {
@@ -8,8 +8,8 @@
 }
 
 .dash-sidebar {
-  background: rgba(4, 7, 17, 0.95);
-  border-right: 1px solid var(--border-cyber);
+  background: rgba(255, 255, 255, 0.95);
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
   padding: 30px 24px;
   display: flex;
   flex-direction: column;
@@ -18,10 +18,12 @@
   top: 0;
   height: 100vh;
   z-index: 99;
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.04);
 }
 
 .dash-sidebar .brand {
   margin-bottom: 36px;
+  color: var(--text-main);
 }
 
 .dash-nav {
@@ -40,7 +42,7 @@
   color: var(--text-muted);
   font-family: var(--font-heading);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   border: 1px solid transparent;
   transition: var(--transition);
 }
@@ -48,9 +50,9 @@
 .dash-nav a:hover,
 .dash-nav a.active {
   color: var(--cyan-neon);
-  background: rgba(0, 242, 254, 0.08);
-  border-color: rgba(0, 242, 254, 0.25);
-  box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
+  background: rgba(2, 132, 199, 0.09);
+  border-color: rgba(2, 132, 199, 0.25);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.08);
 }
 
 .dash-content {
@@ -58,7 +60,7 @@
   max-width: 1400px;
 }
 
-/* HUD Metric Cards Grid */
+/* Metric Cards Grid */
 .hud-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -81,7 +83,8 @@
 .hud-metric:hover {
   border-color: var(--border-cyber-glow);
   transform: translateY(-3px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.2);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08), 0 0 18px rgba(2, 132, 199, 0.12);
+  background: var(--bg-card-hover);
 }
 
 .hud-metric label {
@@ -100,7 +103,6 @@
   font-weight: 700;
   color: var(--cyan-neon);
   margin: 10px 0 4px;
-  text-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
 }
 
 .hud-metric .subtext {
@@ -109,9 +111,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 600;
 }
 
-/* Availability Flux Matrix Calendar */
+/* Availability Matrix Calendar */
 .flux-container {
   background: var(--bg-card);
   border: 1px solid var(--border-cyber);
@@ -119,6 +122,7 @@
   padding: 30px;
   margin-bottom: 36px;
   backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-cyber);
 }
 
 .flux-grid {
@@ -129,37 +133,39 @@
 }
 
 .flux-day {
-  background: rgba(4, 8, 20, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: var(--radius-sm);
   padding: 16px;
   text-align: center;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
 }
 
 .flux-day.active {
   border-color: var(--emerald-bio);
-  background: rgba(16, 185, 129, 0.08);
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+  background: rgba(5, 150, 105, 0.08);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.12);
 }
 
 .flux-day strong {
   font-family: var(--font-heading);
   font-size: 14px;
   display: block;
-  color: #FFF;
+  color: var(--text-main);
   margin-bottom: 8px;
 }
 
 .flux-slot-badge {
   font-family: var(--font-mono);
   font-size: 10px;
-  background: rgba(0, 242, 254, 0.12);
-  border: 1px solid rgba(0, 242, 254, 0.3);
+  background: rgba(2, 132, 199, 0.1);
+  border: 1px solid rgba(2, 132, 199, 0.25);
   color: var(--cyan-neon);
   padding: 4px 8px;
   border-radius: 4px;
   display: inline-block;
   margin-top: 4px;
+  font-weight: 700;
 }
 
 /* Data Tables */
@@ -171,6 +177,7 @@
   backdrop-filter: blur(20px);
   box-shadow: var(--shadow-cyber);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cyber-table {
@@ -185,19 +192,21 @@
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-muted);
+  background: #F1F5F9;
   text-transform: uppercase;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .cyber-table td {
   padding: 16px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(241, 245, 249, 0.9);
   font-size: 14px;
+  color: var(--text-main);
 }
 
 .cyber-table tr:hover td {
-  background: rgba(0, 242, 254, 0.04);
+  background: rgba(2, 132, 199, 0.03);
 }
 
 /* Status Pills */
@@ -216,26 +225,26 @@
 .status-verified, .status-active, .status-completed {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.3);
-  color: #6EE7B7;
+  color: #047857;
 }
 
 .status-pending, .status-requested {
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  color: #FDE047;
+  color: #B45309;
 }
 
 .status-cancelled, .status-rejected {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #FCA5A5;
+  color: #B91C1C;
 }
 
 /* Date & Time Picker Indicators */
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"] {
-  color-scheme: dark;
+  color-scheme: light;
   position: relative;
 }
 
@@ -243,22 +252,13 @@ input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  filter: invert(0.85) sepia(100%) saturate(1000%) hue-rotate(130deg);
-  opacity: 0.9;
+  opacity: 0.85;
   padding: 4px;
   border-radius: 4px;
   transition: var(--transition);
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator:hover,
-input[type="time"]::-webkit-calendar-picker-indicator:hover,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-  background: rgba(0, 242, 254, 0.2);
-  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
-}
-
-/* Admin Directory Nodes 3-Column Fit Layout */
+/* Admin Directory Nodes Layout */
 .admin-nodes-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -283,9 +283,10 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   margin-top: auto;
 }
 
+/* Dashboard Media Queries */
 @media (max-width: 1100px) {
   .admin-nodes-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -296,8 +297,44 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   .dash-sidebar {
     height: auto;
     position: relative;
+    border-right: none;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+    padding: 20px 4%;
+  }
+  .dash-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dash-nav a {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+  .flux-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-nodes-grid {
+    grid-template-columns: 1fr;
+  }
+  .hud-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
   .flux-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-content {
+    padding: 20px 4%;
+  }
+}
+
+@media (max-width: 480px) {
+  .hud-grid {
+    grid-template-columns: 1fr;
+  }
+  .flux-grid {
+    grid-template-columns: 1fr;
   }
 }

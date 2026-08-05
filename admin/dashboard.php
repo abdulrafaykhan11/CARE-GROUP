@@ -109,7 +109,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                     <div class="section-heading" style="margin-bottom: 20px;">
                         <div>
                             <p class="eyebrow">STATUS FUNNEL</p>
-                            <h3 style="margin:0; font-size: 20px; color:#FFF;">Appointment Distribution</h3>
+                            <h3 style="margin:0; font-size: 20px; color: var(--text-main);">Appointment Distribution</h3>
                         </div>
                         <span style="font-family: var(--font-mono); color: var(--rose-danger); font-size: 12px; font-weight: 700;"><?=$frictionRate?>% FRICTION</span>
                     </div>
@@ -120,10 +120,10 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                         ?>
                             <div style="display: grid; grid-template-columns: 100px 1fr 40px; gap: 12px; align-items: center; font-family: var(--font-mono); font-size: 12px;">
                                 <span style="color: var(--text-muted);"><?=$status?></span>
-                                <div style="height: 10px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden;">
+                                <div style="height: 10px; background: rgba(226,232,240,0.9); border-radius: 999px; overflow: hidden;">
                                     <div style="width: <?=$width?>%; height: 100%; background: linear-gradient(90deg, var(--cyan-neon), var(--violet-quantum));"></div>
                                 </div>
-                                <b style="color: #FFF; text-align: right;"><?=$value?></b>
+                                <b style="color: var(--text-main); text-align: right;"><?=$value?></b>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -133,7 +133,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                     <div class="section-heading" style="margin-bottom: 20px;">
                         <div>
                             <p class="eyebrow">DEMAND MATRIX</p>
-                            <h3 style="margin:0; font-size: 20px; color:#FFF;">Weekday Telemetry</h3>
+                            <h3 style="margin:0; font-size: 20px; color: var(--text-main);">Weekday Telemetry</h3>
                         </div>
                         <span style="font-family: var(--font-mono); color: var(--emerald-bio); font-size: 12px; font-weight: 700;"><?=$completionRate?>% COMPLETE</span>
                     </div>
@@ -144,7 +144,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                             <div style="height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px;">
                                 <div style="width: 100%; height: <?=$height?>%; background: linear-gradient(180deg, var(--cyan-neon), var(--emerald-bio)); border-radius: 4px;"></div>
                                 <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);"><?=substr($day, 0, 3)?></span>
-                                <b style="font-family: var(--font-mono); font-size: 11px; color: #FFF;"><?=$value?></b>
+                                <b style="font-family: var(--font-mono); font-size: 11px; color: var(--text-main);"><?=$value?></b>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -157,7 +157,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                     <div class="section-heading" style="margin-bottom: 16px;">
                         <div>
                             <p class="eyebrow">VERIFICATION QUEUE</p>
-                            <h3 style="margin:0; font-size: 18px; color:#FFF;">Doctors Waiting Verification</h3>
+                            <h3 style="margin:0; font-size: 18px; color: var(--text-main);">Doctors Waiting Verification</h3>
                         </div>
                         <a href="doctors.php?status=Pending" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">Review All</a>
                     </div>
@@ -166,10 +166,10 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                             <?php while($d = mysqli_fetch_assoc($pendingDoctors)):
                                 $photo = doctorFileUrl($d['profile_image'], 'profile');
                             ?>
-                                <a href="doctor_detail.php?id=<?=$d['doctor_id']?>" style="display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); background: rgba(4,8,20,0.6);">
+                                <a href="doctor_detail.php?id=<?=$d['doctor_id']?>" style="display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); background: var(--bg-card);">
                                     <img src="<?=h($photo ?: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300')?>" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover;" alt="">
                                     <div style="flex-grow: 1;">
-                                        <strong style="color: #FFF; display: block;">Dr. <?=h($d['full_name'])?></strong>
+                                        <strong style="color: var(--text-main); display: block;">Dr. <?=h($d['full_name'])?></strong>
                                         <span style="font-size: 12px; color: var(--text-muted);"><?=h($d['specialization_name'])?> &middot; <?=h($d['city_name'])?></span>
                                     </div>
                                     <span class="btn btn-outline" style="padding: 6px 12px; font-size: 11px;">Review</span>
@@ -178,7 +178,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                         </div>
                     <?php else: ?>
                         <div class="empty-state" style="padding: 30px;">
-                            <h4 style="margin:0; color:#FFF;">No pending doctor approvals</h4>
+                            <h4 style="margin:0; color: var(--text-main);">No pending doctor approvals</h4>
                             <p style="margin:6px 0 0; font-size: 13px;">All practitioner credentials verified.</p>
                         </div>
                     <?php endif; ?>
@@ -188,15 +188,15 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                     <div class="section-heading" style="margin-bottom: 16px;">
                         <div>
                             <p class="eyebrow">SYSTEM LOGS</p>
-                            <h3 style="margin:0; font-size: 18px; color:#FFF;">Recent Appointment Activity</h3>
+                            <h3 style="margin:0; font-size: 18px; color: var(--text-main);">Recent Appointment Activity</h3>
                         </div>
                         <a href="appointments.php" style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">Manage Nexus</a>
                     </div>
                     <div style="display: grid; gap: 12px;">
                         <?php while($a = mysqli_fetch_assoc($recentAppointments)): ?>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-sm); font-size: 13px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg-card);">
                                 <div>
-                                    <strong style="color: #FFF; font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">
+                                    <strong style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon);">
                                         <?=date('d M Y', strtotime($a['appointment_date']))?> - <?=date('h:i A', strtotime($a['appointment_time']))?>
                                     </strong>
                                     <div style="color: var(--text-muted); margin-top: 4px;">

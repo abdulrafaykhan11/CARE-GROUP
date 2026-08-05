@@ -51,7 +51,7 @@ $users = mysqli_query($conn, "SELECT user_id,full_name,email,phone,role,status,c
                     <tbody>
                         <?php while($u = mysqli_fetch_assoc($users)): ?>
                             <tr>
-                                <td><strong style="color: #FFF;"><?=h($u['full_name'])?></strong></td>
+                                <td><strong style="color: var(--text-main);"><?=h($u['full_name'])?></strong></td>
                                 <td><span style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon); font-weight: 700;"><?=h($u['role'])?></span></td>
                                 <td style="color: var(--text-muted); font-size: 13px;">
                                     <?=h($u['email'])?><br>

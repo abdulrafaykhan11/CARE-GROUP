@@ -167,8 +167,8 @@ include 'includes/header.php';
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
           <?php if ($availability): ?>
             <?php foreach ($availability as $a): ?>
-              <div style="background: rgba(4, 8, 20, 0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px;">
-                <strong style="color: #FFF; font-size: 15px; display: block;"><?= htmlspecialchars($a['clinic_name']) ?></strong>
+              <div style="background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 16px;">
+                <strong style="color: var(--text-main); font-size: 15px; display: block;"><?= htmlspecialchars($a['clinic_name']) ?></strong>
                 <span style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan-neon); font-weight: 700; text-transform: uppercase; display: block; margin: 4px 0;"><?= htmlspecialchars($a['day']) ?></span>
                 <small style="color: var(--text-muted); font-family: var(--font-mono); font-size: 11px;">
                   <?= date('h:i A', strtotime($a['start_time'])) ?> - <?= date('h:i A', strtotime($a['end_time'])) ?> (<?= intval($a['slot_duration']) ?> min slots)
@@ -185,11 +185,11 @@ include 'includes/header.php';
         <!-- Specialty & Practice FAQs Panel -->
         <section class="doctor-story-panel">
           <p class="eyebrow" style="color: var(--cyan-neon);">PATIENT CARE & PRACTICE FAQS</p>
-          <h2 style="font-size: 22px; margin-bottom: 18px; color: #FFF;">Frequently Asked Questions</h2>
+          <h2 style="font-size: 22px; margin-bottom: 18px; color: var(--text-main);">Frequently Asked Questions</h2>
           <div class="faq-accordion" style="display: grid; gap: 12px;">
             <?php foreach ($profileFaqs as $q => $a): ?>
-              <details style="background: rgba(4, 8, 20, 0.8); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 14px 18px; cursor: pointer;">
-                <summary style="font-family: var(--font-heading); font-weight: 600; color: #FFF; font-size: 15px; outline: none; display: flex; justify-content: space-between; align-items: center;">
+              <details style="background: var(--bg-card); border: 1px solid var(--border-cyber); border-radius: var(--radius-sm); padding: 14px 18px; cursor: pointer;">
+                <summary style="font-family: var(--font-heading); font-weight: 600; color: var(--text-main); font-size: 15px; outline: none; display: flex; justify-content: space-between; align-items: center;">
                   <span><?= htmlspecialchars($q) ?></span>
                   <span style="color: var(--cyan-neon); font-family: var(--font-mono); font-size: 18px;">+</span>
                 </summary>

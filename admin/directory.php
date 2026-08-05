@@ -34,7 +34,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
             <section class="admin-nodes-grid">
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--cyan-neon);">ADD CLINIC NODE</p>
-                    <h3 style="margin-top: 0; color: #FFF;">Register Clinic</h3>
+                    <h3 style="margin-top: 0; color: var(--text-main);">Register Clinic</h3>
                     <form method="post">
                         <input type="hidden" name="action" value="add_clinic">
                         <div class="field"><label>CLINIC NAME</label><input name="clinic_name" required placeholder="e.g. Care Nexus Central"></div>
@@ -58,7 +58,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
 
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--emerald-bio);">ADD SPECIALTY</p>
-                    <h3 style="margin-top: 0; color: #FFF;">Medical Specialization</h3>
+                    <h3 style="margin-top: 0; color: var(--text-main);">Medical Specialization</h3>
                     <form method="post">
                         <input type="hidden" name="action" value="add_specialization">
                         <div class="field"><label>SPECIALTY NAME</label><input name="specialization_name" required placeholder="e.g. Cardiology"></div>
@@ -70,7 +70,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
 
                 <article class="profile-shard" style="padding: 24px;">
                     <p class="eyebrow" style="color: var(--violet-quantum);">ADD CITY NODE</p>
-                    <h3 style="margin-top: 0; color: #FFF;">City Network Node</h3>
+                    <h3 style="margin-top: 0; color: var(--text-main);">City Network Node</h3>
                     <form method="post">
                         <input type="hidden" name="action" value="add_city">
                         <div class="field"><label>CITY NAME</label><input name="city_name" required placeholder="e.g. Multan"></div>
@@ -85,7 +85,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                 <!-- Clinics Table -->
                 <article class="cyber-table-wrap">
                     <p class="eyebrow">REGISTERED CLINIC NODES</p>
-                    <h3 style="margin:0 0 16px; color:#FFF;">Active Clinic Network</h3>
+                    <h3 style="margin:0 0 16px; color: var(--text-main);">Active Clinic Network</h3>
                     <table class="cyber-table">
                         <thead>
                             <tr>
@@ -102,7 +102,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                                 <tr>
                                     <td style="font-family: var(--font-mono); color: var(--cyan-neon);">#<?=$c['clinic_id']?></td>
                                     <td>
-                                        <strong style="color: #FFF;"><?=h($c['clinic_name'])?></strong><br>
+                                        <strong style="color: var(--text-main);"><?=h($c['clinic_name'])?></strong><br>
                                         <small style="color: var(--text-muted);"><?=h($c['address'])?></small>
                                     </td>
                                     <td><?=h($c['city_name'])?></td>
@@ -134,7 +134,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                 <!-- Specializations Table -->
                 <article class="cyber-table-wrap">
                     <p class="eyebrow">MEDICAL SPECIALIZATIONS</p>
-                    <h3 style="margin:0 0 16px; color:#FFF;">Specialty Archive</h3>
+                    <h3 style="margin:0 0 16px; color: var(--text-main);">Specialty Archive</h3>
                     <table class="cyber-table">
                         <thead>
                             <tr>
@@ -148,7 +148,7 @@ $cityOptions = mysqli_query($conn, "SELECT city_id,city_name FROM cities WHERE s
                         <tbody>
                             <?php while($s = mysqli_fetch_assoc($specializations)): ?>
                                 <tr>
-                                    <td><strong style="color: #FFF;"><?=h($s['specialization_name'])?></strong></td>
+                                    <td><strong style="color: var(--text-main);"><?=h($s['specialization_name'])?></strong></td>
                                     <td style="color: var(--text-muted); font-size: 13px; max-width: 300px;"><?=h($s['description'])?></td>
                                     <td style="font-family: var(--font-mono); color: var(--cyan-neon);"><?=$s['doctors_count']?> Doctors</td>
                                     <td><span class="status-pill status-<?=strtolower($s['status'])?>"><?=$s['status']?></span></td>
