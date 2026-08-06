@@ -20,6 +20,9 @@ if (isset($conn) && $conn) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="care-user-role" content="<?= htmlspecialchars(($_SESSION['role'] ?? 'All') === 'Patient' ? 'Patient' : 'All') ?>">
+  <meta name="care-user-logged-in" content="<?= !empty($_SESSION['user_id']) ? 'true' : 'false' ?>">
+  <meta name="care-just-logged-in" content="<?= !empty($_SESSION['just_logged_in']) ? 'true' : 'false' ?>">
+  <?php unset($_SESSION['just_logged_in']); ?>
   <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | CARE Group' : 'CARE Group | Trusted Medical Care Platform' ?></title>
   
   <!-- Modern Fonts -->

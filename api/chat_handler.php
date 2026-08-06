@@ -249,24 +249,48 @@ function callGeminiAPI(string $modelName, string $apiKey, array $payload): ?stri
     }
 
     $url = "https://generativelanguage.googleapis.com/v1beta/models/{$modelName}:generateContent?key={$apiKey}";
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 16);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
-    $data = json_decode((string)$response, true);
+    $executeCurl = function(array $body) use ($url) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 16);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $res = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return [$code, json_decode((string)$res, true)];
+    };
+
+    [$httpCode, $data] = $executeCurl($payload);
+
     if ($httpCode === 200 && isset($data['candidates'][0]['content']['parts'][0]['text'])) {
         return trim($data['candidates'][0]['content']['parts'][0]['text']);
     }
+
+    // Fallback 1: Try with googleSearch key if google_search was rejected
+    if (isset($payload['tools'])) {
+        $fallbackPayload = $payload;
+        $fallbackPayload['tools'] = [['googleSearch' => new stdClass()]];
+        [$httpCode2, $data2] = $executeCurl($fallbackPayload);
+        if ($httpCode2 === 200 && isset($data2['candidates'][0]['content']['parts'][0]['text'])) {
+            return trim($data2['candidates'][0]['content']['parts'][0]['text']);
+        }
+
+        // Fallback 2: Try without tools array
+        unset($fallbackPayload['tools']);
+        [$httpCode3, $data3] = $executeCurl($fallbackPayload);
+        if ($httpCode3 === 200 && isset($data3['candidates'][0]['content']['parts'][0]['text'])) {
+            return trim($data3['candidates'][0]['content']['parts'][0]['text']);
+        }
+    }
+
     return null;
 }
+
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true) ?? [];
@@ -481,28 +505,26 @@ $siteInstruction = $websiteContext !== ''
     : "No matching CARE website context was found. Answer from general medical knowledge and say that no exact CARE site match was found if relevant.";
 
 global $geminiSystemInstruction;
-$prompt = $geminiSystemInstruction . "\n\n"
-    . "Extra behavior rules:\n"
-    . "- Do not introduce yourself unless the user asks who you are.\n"
-    . "- Answer the user's exact question directly in a confident, advanced but simple style.\n"
-    . "- Website-first, then general medical knowledge. Never say you cannot help just because CARE has no local result.\n"
-    . "- For doctors, list matched CARE doctors first with specialty, city, fee, experience, verification status, and booking suggestion.\n"
-    . "- For diseases/fields, explain overview, common signs, possible causes, what to do, what to avoid, which specialist to see, and red flags.\n"
-    . "- Keep answers practical for Pakistan/clinic context when possible. Avoid diagnosis certainty.\n\n"
-    . $siteInstruction . "\n\n"
+$prompt = "DUAL-SOURCE GROUNDING QUERY:\n\n"
     . "CARE Website Context:\n" . ($websiteContext ?: "No direct CARE database match.\n") . "\n"
-    . "Recent chat:\n" . ($historyText ?: "None\n") . "\n"
-    . "User question: " . $userMessage;
+    . "Recent Chat History:\n" . ($historyText ?: "None\n") . "\n"
+    . "User Question: " . $userMessage;
 
 $payload = [
+    'systemInstruction' => [
+        'parts' => [['text' => $geminiSystemInstruction]]
+    ],
     'contents' => [[
         'role' => 'user',
         'parts' => [['text' => $prompt]],
     ]],
+    'tools' => [
+        ['google_search' => new stdClass()]
+    ],
     'generationConfig' => [
-        'temperature' => 0.35,
-        'topK' => 40,
-        'topP' => 0.9,
+        'temperature' => 0.15,
+        'topK' => 20,
+        'topP' => 0.85,
         'maxOutputTokens' => 1400,
     ],
 ];

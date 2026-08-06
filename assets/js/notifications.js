@@ -1,12 +1,19 @@
 /**
- * CARE Nexus — Real-Time Notification Toast System
- * Shows one notification at a time, 10-15s delay, responsive & dismissible.
+ * CARE Nexus — Real-Time Notification & Continuous Login Notification Cycle Engine
+ * Features:
+ *  - Immediate 2-notification pop-up sequence on user login
+ *  - Automated interval loop sending 2 notifications every 30-40s (35s loop)
+ *  - Native Browser Desktop Notification permission request + dual Toast delivery
+ *  - Session state persistence & user dismissal controls
  */
 (function () {
     'use strict';
 
     const STORAGE_KEY = 'care_dismissed_notifs';
-    const SESSION_KEY = 'care_session_notifs_shown';
+    const INTERVAL_MS = 35000; // 35 seconds (loop between 30 and 40s)
+    let notifQueue = [];
+    let queueIndex = 0;
+    let cycleIntervalTimer = null;
 
     function getDismissed() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -18,12 +25,24 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
 
-    function wasShownThisSession() {
-        return sessionStorage.getItem(SESSION_KEY) === '1';
+    /* ── Native Browser Notification Request ────────────────── */
+    function requestBrowserNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().catch(() => {});
+        }
     }
 
-    function markShownThisSession() {
-        sessionStorage.setItem(SESSION_KEY, '1');
+    function triggerNativeNotification(notif) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                const cleanTitle = notif.title.replace(/^[^\s]+\s/, '');
+                new Notification(`CARE Nexus: ${cleanTitle}`, {
+                    body: notif.message,
+                    icon: '/assets/uploads/care_icon.png',
+                    tag: 'care-notif-' + notif.id
+                });
+            } catch (e) {}
+        }
     }
 
     /* ── CSS Injection ─────────────────────────────────────── */
@@ -261,8 +280,12 @@
 
     /* ── Toast Builder ─────────────────────────────────────── */
     function buildToast(notif, autoHideMs) {
-        const container = document.getElementById('care-notif-container');
-        if (!container) return;
+        let container = document.getElementById('care-notif-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'care-notif-container';
+            document.body.appendChild(container);
+        }
 
         const toast = document.createElement('div');
         toast.className = 'care-notif-toast';
@@ -279,7 +302,7 @@
                 <div class="care-notif-eyebrow">
                     <span class="care-notif-type-dot"></span>
                     CARE NEXUS — ${notif.type}
-                    <span class="care-notif-date">${notif.date}</span>
+                    <span class="care-notif-date">${notif.date || 'Just now'}</span>
                 </div>
                 <div class="care-notif-title">${escapeHtml(notif.title.replace(/^[^\s]+\s/, ''))}</div>
                 <div class="care-notif-message">${escapeHtml(notif.message)}</div>
@@ -295,6 +318,9 @@
         `;
 
         container.appendChild(toast);
+
+        // Fire native desktop notification if permitted
+        triggerNativeNotification(notif);
 
         // Animate in
         requestAnimationFrame(() => {
@@ -342,64 +368,82 @@
         return d.innerHTML;
     }
 
-    /* ── Main Loader ───────────────────────────────────────── */
-    function loadAndShow(role) {
-        if (wasShownThisSession()) return;
+    /* ── Send Pair of Notifications (Simultaneously / Staggered 400ms) ── */
+    function sendNotificationPair() {
+        if (!notifQueue.length) return;
 
         const dismissed = getDismissed();
-        const pathPrefix = (window.location.pathname.includes('/admin/') ||
-                           window.location.pathname.includes('/doctor/') ||
-                           window.location.pathname.includes('/patient/')) ? '../' : '';
+        const available = notifQueue.filter(n => !dismissed.includes(n.id));
+        if (!available.length) return;
 
-        fetch(`${pathPrefix}api/get_notifications.php?limit=6&role=${encodeURIComponent(role)}`)
+        // Take 2 notifications from available
+        const first = available[queueIndex % available.length];
+        const second = available[(queueIndex + 1) % available.length];
+
+        queueIndex = (queueIndex + 2) % available.length;
+
+        // Fire first notification
+        buildToast(first, 9000);
+
+        // Fire second notification simultaneously (350ms delay for visual layout stacking)
+        if (second && second.id !== first.id) {
+            setTimeout(() => {
+                buildToast(second, 9000);
+            }, 350);
+        }
+    }
+
+    /* ── Continuous Cycle Controller ────────────────────────── */
+    function startLoginNotificationCycle(role) {
+        requestBrowserNotificationPermission();
+
+        const pathPrefix = (window.location.pathname.includes('/admin/') ||
+                            window.location.pathname.includes('/doctor/') ||
+                            window.location.pathname.includes('/patient/')) ? '../' : '';
+
+        fetch(`${pathPrefix}api/get_notifications.php?limit=10&role=${encodeURIComponent(role)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success' || !data.data || !data.data.length) return;
 
-                // Filter out permanently dismissed ones
-                const pending = data.data.filter(n => !dismissed.includes(n.id));
-                if (!pending.length) return;
+                notifQueue = data.data;
 
-                markShownThisSession();
+                // 1. Send 2 notifications immediately on login / init
+                sendNotificationPair();
 
-                // Create container
-                let container = document.getElementById('care-notif-container');
-                if (!container) {
-                    container = document.createElement('div');
-                    container.id = 'care-notif-container';
-                    document.body.appendChild(container);
-                }
-
-                // Show notifications with a staggered delay (one at a time)
-                const FIRST_DELAY = 10000 + Math.random() * 5000; // 10–15 seconds
-                const STAGGER = 5500; // 5.5 seconds between each
-                const AUTO_HIDE = 9000; // 9 seconds visible
-
-                // Only show max 2 per session, one at a time
-                const toShow = pending.slice(0, 2);
-
-                toShow.forEach((notif, index) => {
-                    setTimeout(() => {
-                        buildToast(notif, AUTO_HIDE);
-                    }, FIRST_DELAY + index * STAGGER);
-                });
+                // 2. Clear old interval if any and start loop every 35 seconds
+                if (cycleIntervalTimer) clearInterval(cycleIntervalTimer);
+                cycleIntervalTimer = setInterval(() => {
+                    sendNotificationPair();
+                }, INTERVAL_MS);
             })
-            .catch(() => {}); // Silent fail
+            .catch(() => {});
     }
 
     /* ── Init ──────────────────────────────────────────────── */
     function init() {
         injectStyles();
 
-        // Detect page role — check body class or meta tag set by PHP
         const roleMeta = document.querySelector('meta[name="care-user-role"]');
         const role = roleMeta ? roleMeta.content : 'All';
 
-        // Don't show on admin or doctor pages
-        const path = window.location.pathname;
-        if (path.includes('/admin/') || path.includes('/doctor/')) return;
+        const loggedInMeta = document.querySelector('meta[name="care-user-logged-in"]');
+        const justLoggedInMeta = document.querySelector('meta[name="care-just-logged-in"]');
 
-        loadAndShow(role);
+        const isLoggedIn = loggedInMeta ? loggedInMeta.content === 'true' : false;
+        const justLoggedIn = justLoggedInMeta ? justLoggedInMeta.content === 'true' : false;
+
+        if (justLoggedIn) {
+            sessionStorage.setItem('care_just_logged_in', '1');
+            sessionStorage.setItem('care_active_session', '1');
+        }
+
+        const isSessionActive = isLoggedIn || sessionStorage.getItem('care_active_session') === '1';
+
+        if (isSessionActive) {
+            // Trigger login notification cycle immediately on login & maintain loop
+            startLoginNotificationCycle(role);
+        }
     }
 
     if (document.readyState === 'loading') {

@@ -17,7 +17,12 @@ if (isset($_POST['submit'])) {
         }
     }
     if ($passwordMatch) {
-        $_SESSION = ['user_id' => $u['user_id'], 'full_name' => $u['full_name'], 'role' => $u['role']];
+        $_SESSION = [
+            'user_id' => $u['user_id'],
+            'full_name' => $u['full_name'],
+            'role' => $u['role'],
+            'just_logged_in' => true
+        ];
         $to = $u['role'] === 'Doctor' ? 'doctor/dashboard.php' : ($u['role'] === 'Patient' ? 'patient/dashboard.php' : 'admin/dashboard.php');
         header("Location: $to");
         exit;
