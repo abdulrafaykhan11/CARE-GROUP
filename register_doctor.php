@@ -11,6 +11,12 @@ if (isset($_POST["register_doctor"])) {
     $cnicPattern = "/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/";
     $pmdcPattern = "/^[0-9]{4,7}-[A-Za-z]{1}$/";
 
+    // DOB age check — must be at least 16 years old
+    $dobAge = 0;
+    if (!empty($_POST['dob'])) {
+        $dobAge = (int) date_diff(date_create($_POST['dob']), date_create('today'))->y;
+    }
+
     if (
         strlen($_POST["full_address"]) >= 8 &&
         !empty($_POST["experience"]) &&
@@ -22,6 +28,7 @@ if (isset($_POST["register_doctor"])) {
         !empty($_POST["city_id"]) &&
         !empty($_POST["gender"]) &&
         !empty($_POST["dob"]) &&
+        $dobAge >= 16 &&
         !empty($_POST["bio"]) &&
         !empty($_FILES['img']['name']) &&
         !empty($_FILES['license']['name']) &&
@@ -103,7 +110,11 @@ if (isset($_POST["register_doctor"])) {
         }
 
     } else {
-        $error = "Error: Ensure all required fields, CNIC format, PMDC format, and document certificates are provided.";
+        if (!empty($_POST['dob']) && $dobAge < 16) {
+            $error = "You must be at least 16 years old to register as a doctor.";
+        } else {
+            $error = "Error: Ensure all required fields, CNIC format, PMDC format, and document certificates are provided.";
+        }
     }
 }
 
@@ -211,7 +222,9 @@ include 'includes/header.php';
                 </div>
                 <div class="field">
                     <label>DATE OF BIRTH <span style="color: var(--cyan-neon);">*</span></label>
-                    <input type="date" name="dob" required>
+                    <input type="date" name="dob" id="doctor_dob" required>
+                    <small id="doc_age_msg" style="color: var(--cyan-neon); font-size: 12px; display:none;"></small>
+                    <small id="doc_err_msg" style="color: #ff4f4f; font-size: 12px; display:none;">You must be at least 16 years old.</small>
                 </div>
             </div>
 
@@ -220,11 +233,44 @@ include 'includes/header.php';
                 <textarea name="bio" rows="4" placeholder="Detail your clinical background, experience, and patient care philosophy..." required></textarea>
             </div>
             
-            <button class="btn btn-primary" type="submit" name="register_doctor" style="width:100%; margin-top:10px;">
+            <button class="btn btn-primary" type="submit" name="register_doctor" id="doctor_submit_btn" style="width:100%; margin-top:10px;">
                 <span>❖ Submit Credentials For Verification</span>
             </button>
         </form>
     </main>
 </div>
+
+<script>
+(function () {
+    const dobInput  = document.getElementById('doctor_dob');
+    const ageMsg    = document.getElementById('doc_age_msg');
+    const errMsg    = document.getElementById('doc_err_msg');
+    const submitBtn = document.getElementById('doctor_submit_btn');
+
+    // Set max date = today
+    const today = new Date();
+    dobInput.max = today.toISOString().split('T')[0];
+
+    function calcAge(dob) {
+        const diff = Date.now() - new Date(dob).getTime();
+        return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+    }
+
+    dobInput.addEventListener('change', function () {
+        if (!this.value) return;
+        const age = calcAge(this.value);
+        if (age < 16) {
+            errMsg.style.display = 'block';
+            ageMsg.style.display = 'none';
+            submitBtn.disabled = true;
+        } else {
+            errMsg.style.display = 'none';
+            ageMsg.textContent = `Age: ${age} years`;
+            ageMsg.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+    });
+})();
+</script>
 
 <?php include 'includes/footer.php'; ?>
