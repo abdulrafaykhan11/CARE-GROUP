@@ -1,19 +1,12 @@
 /**
- * CARE Nexus — Real-Time Notification & Continuous Login Notification Cycle Engine
- * Features:
- *  - Immediate 2-notification pop-up sequence on user login
- *  - Automated interval loop sending 2 notifications every 30-40s (35s loop)
- *  - Native Browser Desktop Notification permission request + dual Toast delivery
- *  - Session state persistence & user dismissal controls
+ * CARE Nexus — Notification Toast Engine
+ * Single non-intrusive notification sequence on login with correct relative URL resolution.
  */
 (function () {
     'use strict';
 
     const STORAGE_KEY = 'care_dismissed_notifs';
-    const INTERVAL_MS = 35000; // 35 seconds (loop between 30 and 40s)
-    let notifQueue = [];
-    let queueIndex = 0;
-    let cycleIntervalTimer = null;
+    const SESSION_SHOWN_KEY = 'care_login_notif_shown';
 
     function getDismissed() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
@@ -25,20 +18,33 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     }
 
-    /* ── Native Browser Notification Request ────────────────── */
-    function requestBrowserNotificationPermission() {
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().catch(() => {});
-        }
+    function wasShownThisSession() {
+        return sessionStorage.getItem(SESSION_SHOWN_KEY) === '1';
     }
 
+    function markShownThisSession() {
+        sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
+    }
+
+    /* ── Resolve Relative Action URLs Correctly ────────────── */
+    function resolveActionUrl(url) {
+        if (!url || url === '#' || url === '') return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+
+        const path = window.location.pathname;
+        const isSubdir = path.includes('/patient/') || path.includes('/doctor/') || path.includes('/admin/');
+        const cleanUrl = url.replace(/^\//, '');
+
+        return isSubdir ? '../' + cleanUrl : cleanUrl;
+    }
+
+    /* ── Native Browser Notification ────────────────── */
     function triggerNativeNotification(notif) {
         if ('Notification' in window && Notification.permission === 'granted') {
             try {
                 const cleanTitle = notif.title.replace(/^[^\s]+\s/, '');
                 new Notification(`CARE Nexus: ${cleanTitle}`, {
                     body: notif.message,
-                    icon: '/assets/uploads/care_icon.png',
                     tag: 'care-notif-' + notif.id
                 });
             } catch (e) {}
@@ -172,12 +178,12 @@
 
         .care-notif-btn-primary {
             background: linear-gradient(135deg, #06b6d4, #3b82f6);
-            color: #fff;
+            color: #fff !important;
         }
         .care-notif-btn-primary:hover {
             background: linear-gradient(135deg, #0891b2, #2563eb);
             transform: translateY(-1px);
-            color: #fff;
+            color: #fff !important;
         }
 
         .care-notif-btn-dismiss {
@@ -292,9 +298,7 @@
         toast.dataset.id = notif.id;
         toast.dataset.type = notif.type;
 
-        const actionUrl = notif.action_url && notif.action_url !== '#'
-            ? (notif.action_url.startsWith('http') ? notif.action_url : '/' + notif.action_url.replace(/^\//, ''))
-            : null;
+        const resolvedUrl = resolveActionUrl(notif.action_url);
 
         toast.innerHTML = `
             <div class="care-notif-icon">${notif.icon || '🔔'}</div>
@@ -307,7 +311,7 @@
                 <div class="care-notif-title">${escapeHtml(notif.title.replace(/^[^\s]+\s/, ''))}</div>
                 <div class="care-notif-message">${escapeHtml(notif.message)}</div>
                 <div class="care-notif-actions">
-                    ${actionUrl ? `<a href="${actionUrl}" class="care-notif-btn care-notif-btn-primary">Learn More →</a>` : ''}
+                    ${resolvedUrl ? `<a href="${resolvedUrl}" class="care-notif-btn care-notif-btn-primary">Learn More →</a>` : ''}
                     <button class="care-notif-btn care-notif-btn-dismiss js-dismiss-forever">Don't show again</button>
                 </div>
             </div>
@@ -319,30 +323,24 @@
 
         container.appendChild(toast);
 
-        // Fire native desktop notification if permitted
         triggerNativeNotification(notif);
 
-        // Animate in
         requestAnimationFrame(() => {
             requestAnimationFrame(() => toast.classList.add('care-notif-in'));
         });
 
-        // Auto-hide timer
         let timer = setTimeout(() => dismissToast(toast, false), autoHideMs);
 
-        // Close button
         toast.querySelector('.js-close').addEventListener('click', () => {
             clearTimeout(timer);
             dismissToast(toast, false);
         });
 
-        // "Don't show again" button
         toast.querySelector('.js-dismiss-forever').addEventListener('click', () => {
             clearTimeout(timer);
             dismissToast(toast, true);
         });
 
-        // Pause progress on hover
         toast.addEventListener('mouseenter', () => {
             clearTimeout(timer);
             toast.querySelector('.care-notif-progress-bar').style.animationPlayState = 'paused';
@@ -368,54 +366,30 @@
         return d.innerHTML;
     }
 
-    /* ── Send Pair of Notifications (Simultaneously / Staggered 400ms) ── */
-    function sendNotificationPair() {
-        if (!notifQueue.length) return;
+    /* ── Single Login Notification Trigger ─────────────────── */
+    function triggerLoginNotificationOnce(role) {
+        if (wasShownThisSession()) return;
 
         const dismissed = getDismissed();
-        const available = notifQueue.filter(n => !dismissed.includes(n.id));
-        if (!available.length) return;
-
-        // Take 2 notifications from available
-        const first = available[queueIndex % available.length];
-        const second = available[(queueIndex + 1) % available.length];
-
-        queueIndex = (queueIndex + 2) % available.length;
-
-        // Fire first notification
-        buildToast(first, 9000);
-
-        // Fire second notification simultaneously (350ms delay for visual layout stacking)
-        if (second && second.id !== first.id) {
-            setTimeout(() => {
-                buildToast(second, 9000);
-            }, 350);
-        }
-    }
-
-    /* ── Continuous Cycle Controller ────────────────────────── */
-    function startLoginNotificationCycle(role) {
-        requestBrowserNotificationPermission();
-
         const pathPrefix = (window.location.pathname.includes('/admin/') ||
                             window.location.pathname.includes('/doctor/') ||
                             window.location.pathname.includes('/patient/')) ? '../' : '';
 
-        fetch(`${pathPrefix}api/get_notifications.php?limit=10&role=${encodeURIComponent(role)}`)
+        fetch(`${pathPrefix}api/get_notifications.php?limit=6&role=${encodeURIComponent(role)}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success' || !data.data || !data.data.length) return;
 
-                notifQueue = data.data;
+                const available = data.data.filter(n => !dismissed.includes(n.id));
+                if (!available.length) return;
 
-                // 1. Send 2 notifications immediately on login / init
-                sendNotificationPair();
+                markShownThisSession();
 
-                // 2. Clear old interval if any and start loop every 35 seconds
-                if (cycleIntervalTimer) clearInterval(cycleIntervalTimer);
-                cycleIntervalTimer = setInterval(() => {
-                    sendNotificationPair();
-                }, INTERVAL_MS);
+                // Show 1 notification non-intrusively after 2.5 seconds
+                const notif = available[0];
+                setTimeout(() => {
+                    buildToast(notif, 9000);
+                }, 2500);
             })
             .catch(() => {});
     }
@@ -433,16 +407,12 @@
         const isLoggedIn = loggedInMeta ? loggedInMeta.content === 'true' : false;
         const justLoggedIn = justLoggedInMeta ? justLoggedInMeta.content === 'true' : false;
 
-        if (justLoggedIn) {
-            sessionStorage.setItem('care_just_logged_in', '1');
-            sessionStorage.setItem('care_active_session', '1');
-        }
+        // Don't show notifications in admin or doctor management panels
+        const path = window.location.pathname;
+        if (path.includes('/admin/') || path.includes('/doctor/')) return;
 
-        const isSessionActive = isLoggedIn || sessionStorage.getItem('care_active_session') === '1';
-
-        if (isSessionActive) {
-            // Trigger login notification cycle immediately on login & maintain loop
-            startLoginNotificationCycle(role);
+        if (justLoggedIn || (isLoggedIn && !wasShownThisSession())) {
+            triggerLoginNotificationOnce(role);
         }
     }
 
