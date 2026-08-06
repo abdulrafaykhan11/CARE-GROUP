@@ -20,14 +20,13 @@ if (isset($_POST['register_patient'])) {
         preg_match($phonePattern, $_POST["emergency_contact_number"]) &&
         !empty($_POST["gender"]) && !empty($_POST["dob"]) &&
         $dobAge >= 16 &&
-        !empty($_POST["blood_group"]) &&
         !empty($_POST["city_id"]) &&
         !empty($_FILES['profile_picture']['name'])
     ) {
         $full_address = $_POST["full_address"];
         $gender = $_POST["gender"];
         $dob = $_POST["dob"];
-        $blood_group = $_POST["blood_group"];
+        $blood_group = !empty($_POST["blood_group"]) ? $_POST["blood_group"] : 'Unknown';
         $emergency_contact_name = $_POST["emergency_contact_name"];
         $emergency_contact_number = $_POST["emergency_contact_number"];
         $city_id = $_POST['city_id'];
@@ -125,7 +124,7 @@ include 'includes/header.php';
 <div class="field">
                     <label>BLOOD GROUP <span style="color: var(--cyan-neon);">*</span></label>
                     <select name="blood_group" required>
-                        <option value="">— Select Blood Group —</option>
+                        <option value="Unknown">🩸 Don't Know / Not Sure</option>
                         <option value="A+">A+</option>
                         <option value="A-">A-</option>
                         <option value="B+">B+</option>
@@ -134,7 +133,6 @@ include 'includes/header.php';
                         <option value="AB-">AB-</option>
                         <option value="O+">O+</option>
                         <option value="O-">O-</option>
-                        <option value="Unknown">🩸 Don't Know / Not Sure</option>
                     </select>
                 </div>
             </div>

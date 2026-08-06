@@ -31,7 +31,7 @@ if (isset($_POST['update_profile'])) {
     $newImagePath = '';
     $oldImage = $patient['profile_image'] ?? '';
 
-    if ($name === '' || $email === '' || $phone === '' || $address === '' || !$cityId || $gender === '' || $dob === '' || $blood === '') {
+    if ($name === '' || $email === '' || $phone === '' || $address === '' || !$cityId || $gender === '' || $dob === '') {
         $msg = 'Please fill all required fields.';
         $msgType = 'error';
     } elseif (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === 0) {
@@ -181,10 +181,11 @@ $img = !empty($patient['profile_image']) ? '../' . $patient['profile_image'] : '
                             <input type="date" name="date_of_birth" value="<?=htmlspecialchars($patient['date_of_birth'])?>" required>
                         </div>
                         <div class="field">
-                            <label>BLOOD GROUP <span style="color: var(--cyan-neon);">*</span></label>
-                            <select name="blood_group" required>
+                            <label>BLOOD GROUP</label>
+                            <select name="blood_group">
+                                <option value="Unknown" <?=($patient['blood_group']==='' || $patient['blood_group']==='Unknown' || $patient['blood_group'] === null)?'selected':''?>>🩸 Not Known / Not Sure</option>
                                 <?php foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $b): ?>
-                                    <option <?=$patient['blood_group']===$b?'selected':''?>><?=$b?></option>
+                                    <option value="<?=$b?>" <?=$patient['blood_group']===$b?'selected':''?>><?=$b?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
