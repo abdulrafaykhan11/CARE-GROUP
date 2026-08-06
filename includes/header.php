@@ -19,6 +19,7 @@ if (isset($conn) && $conn) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="care-user-role" content="<?= htmlspecialchars(($_SESSION['role'] ?? 'All') === 'Patient' ? 'Patient' : 'All') ?>">
   <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | CARE Group' : 'CARE Group | Trusted Medical Care Platform' ?></title>
   
   <!-- Modern Fonts -->

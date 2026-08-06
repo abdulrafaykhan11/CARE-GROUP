@@ -184,6 +184,7 @@ $newsResult = $conn->query($q);
                             <a href="news_detail.php?id=<?= $row['news_id'] ?>" class="read-more">Read Full Article &rarr;</a>
                             <div class="feedback-stats">
                                 <span title="Helpful" style="color: var(--emerald-bio);">👍 <?= $row['likes'] ?></span>
+                                <span title="Not Helpful" style="color: var(--rose-danger); margin-left: 8px;">👎 <?= $row['dislikes'] ?></span>
                             </div>
                         </div>
                     </div>

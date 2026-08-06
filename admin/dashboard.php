@@ -74,6 +74,7 @@ $recentAppointments = mysqli_query($conn, "SELECT a.appointment_id,a.appointment
                 <a href="users.php">❖ User Telemetry</a>
                 <a href="appointments.php">❖ Appointments Nexus</a>
                 <a href="directory.php">❖ City Nodes & Specs</a>
+                <a href="notifications.php">❖ Notification Manager</a>
                 <a href="../logout.php" style="margin-top: auto; color: var(--rose-danger);">❖ Exit Control</a>
             </nav>
         </aside>

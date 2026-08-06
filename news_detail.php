@@ -193,38 +193,64 @@ $article = $result->fetch_assoc();
     <?php include 'includes/footer.php'; ?>
 
     <script>
-        let hasVoted = false;
-        
-        function submitFeedback(type) {
-            if (hasVoted) {
-                document.getElementById('feedback-msg').textContent = 'You have already submitted your feedback. Thank you!';
-                return;
+        const newsId = <?= $id ?>;
+        const storageKey = 'care_news_vote_' + newsId;
+        let currentVote = localStorage.getItem(storageKey) || null; // 'like', 'dislike', or null
+
+        function updateVoteUI(userVote) {
+            const btnLike = document.getElementById('btn-like');
+            const btnDislike = document.getElementById('btn-dislike');
+            const msgEl = document.getElementById('feedback-msg');
+
+            btnLike.classList.remove('active-yes');
+            btnDislike.classList.remove('active-no');
+
+            if (userVote === 'like') {
+                btnLike.classList.add('active-yes');
+                msgEl.style.color = 'var(--emerald-bio)';
+                msgEl.textContent = '👍 You marked this medical insight as helpful.';
+            } else if (userVote === 'dislike') {
+                btnDislike.classList.add('active-no');
+                msgEl.style.color = 'var(--rose-danger)';
+                msgEl.textContent = '👎 You marked this medical insight as not helpful.';
+            } else {
+                msgEl.style.color = 'var(--cyan-neon)';
+                msgEl.textContent = '';
             }
-            
-            const newsId = <?= $id ?>;
-            
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateVoteUI(currentVote);
+        });
+
+        function submitFeedback(targetVote) {
+            const previousVote = currentVote;
+            const newVote = (currentVote === targetVote) ? null : targetVote; // Toggle off if clicked again
+
             fetch('api/news_feedback.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ id: newsId, type: type })
+                body: JSON.stringify({
+                    id: newsId,
+                    previous_vote: previousVote,
+                    new_vote: newVote
+                })
             })
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'success') {
-                    hasVoted = true;
-                    
-                    // Update UI
-                    if (type === 'like') {
-                        document.getElementById('btn-like').classList.add('active-yes');
-                        document.getElementById('count-like').textContent = data.new_likes;
+                    currentVote = data.user_vote;
+                    if (currentVote) {
+                        localStorage.setItem(storageKey, currentVote);
                     } else {
-                        document.getElementById('btn-dislike').classList.add('active-no');
-                        document.getElementById('count-dislike').textContent = data.new_dislikes;
+                        localStorage.removeItem(storageKey);
                     }
-                    
-                    document.getElementById('feedback-msg').textContent = 'Thank you for your feedback! This helps us improve our medical content.';
+
+                    document.getElementById('count-like').textContent = data.new_likes;
+                    document.getElementById('count-dislike').textContent = data.new_dislikes;
+                    updateVoteUI(currentVote);
                 } else {
                     document.getElementById('feedback-msg').style.color = 'var(--rose-danger)';
                     document.getElementById('feedback-msg').textContent = data.message || 'An error occurred.';
@@ -232,6 +258,7 @@ $article = $result->fetch_assoc();
             })
             .catch(err => {
                 console.error(err);
+                document.getElementById('feedback-msg').style.color = 'var(--rose-danger)';
                 document.getElementById('feedback-msg').textContent = 'Failed to submit feedback.';
             });
         }

@@ -120,5 +120,15 @@
         });
     }
   </script>
+
+  <!-- CARE Nexus Notification Toast System -->
+  <?php
+    $notifScriptPath = (strpos($_SERVER['PHP_SELF'] ?? '', '/patient/') !== false ||
+                        strpos($_SERVER['PHP_SELF'] ?? '', '/doctor/') !== false ||
+                        strpos($_SERVER['PHP_SELF'] ?? '', '/admin/') !== false)
+        ? '../assets/js/notifications.js'
+        : 'assets/js/notifications.js';
+  ?>
+  <script src="<?= htmlspecialchars($notifScriptPath) ?>"></script>
 </body>
 </html>

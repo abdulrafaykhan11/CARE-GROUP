@@ -49,12 +49,13 @@ function doctorFileUrl(?string $path, string $fallbackDir): string
 function adminSidebar(string $active): void
 {
     $items = [
-        'dashboard.php' => ['Overview HUD', 'overview'],
-        'doctors.php' => ['Doctor Approvals', 'doctors'],
-        'users.php' => ['User Telemetry', 'users'],
-        'directory.php' => ['Directory Nodes', 'directory'],
-        'appointments.php' => ['Appointments Nexus', 'appointments'],
-        'content.php' => ['Content Shards', 'content'],
+        'dashboard.php'     => ['Overview HUD',        'overview'],
+        'doctors.php'       => ['Doctor Approvals',    'doctors'],
+        'users.php'         => ['User Telemetry',      'users'],
+        'directory.php'     => ['Directory Nodes',     'directory'],
+        'appointments.php'  => ['Appointments Nexus',  'appointments'],
+        'content.php'       => ['Content Shards',      'content'],
+        'notifications.php' => ['Notification Manager','notifications'],
     ];
     echo '<aside class="dash-sidebar"><a class="brand" href="../index.php">CARE <span>NEXUS</span></a><div class="eyebrow" style="color: var(--violet-quantum); margin-bottom: 24px;">ADMIN OVERSIGHT</div><nav class="dash-nav">';
     foreach ($items as $href => $item) {
