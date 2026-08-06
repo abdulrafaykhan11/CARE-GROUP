@@ -65,6 +65,20 @@ $newsResult = $conn->query($q);
             height: 200px;
             object-fit: cover;
             border-bottom: 1px solid var(--border-cyber);
+            display: block;
+            background: linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(139,92,246,0.15) 100%);
+        }
+        .news-img-placeholder {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(6,182,212,0.12) 0%, rgba(139,92,246,0.12) 100%);
+            border-bottom: 1px solid var(--border-cyber);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: var(--cyan-neon);
+            opacity: 0.5;
         }
         
         .news-content {
@@ -149,7 +163,13 @@ $newsResult = $conn->query($q);
             <?php while($row = $newsResult->fetch_assoc()): ?>
                 <article class="news-card">
                     <?php if(!empty($row['image'])): ?>
-                        <img src="<?= htmlspecialchars($row['image']) ?>" alt="News Image" class="news-img">
+                        <img src="<?= htmlspecialchars($row['image']) ?>" 
+                             alt="<?= htmlspecialchars($row['title']) ?>" 
+                             class="news-img"
+                             onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="news-img-placeholder" style="display:none;">🏥</div>
+                    <?php else: ?>
+                        <div class="news-img-placeholder">🏥</div>
                     <?php endif; ?>
                     <div class="news-content">
                         <div class="news-meta">
